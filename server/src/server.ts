@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db';
+import authRoutes from './routes/authRoutes';
 
 dotenv.config();
 
@@ -22,9 +23,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// TODO: Add your routes here
+// Auth routes
+app.use('/api/auth', authRoutes);
+
+// TODO: Add your additional routes here
 // app.use('/api/todos', todoRoutes);
-// app.use('/api/users', userRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
