@@ -1,0 +1,28 @@
+{
+  "name": "todo-app",
+  "version": "1.0.0",
+  "description": "Full-stack Todo App with TypeScript, React, Node.js, and MongoDB",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "client": "cd client && npm run dev",
+    "server": "cd server && npm run dev",
+    "lint": "npm run lint:client && npm run lint:server",
+    "lint:client": "cd client && npx eslint . --ext .ts,.tsx",
+    "lint:server": "cd server && npx eslint . --ext .ts",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "test": "jest",
+    "test:watch": "jest --watchAll",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.38.0",
+    "jest": "^30.2.0",
+    "prettier": "^3.6.2",
+    "ts-jest": "^29.4.5"
+  }
+}
