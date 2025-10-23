@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { initGoogleAuth, handleGoogleLogin as triggerGoogleLogin } from '../../../utils/googleAuth';
-import { login as apiLogin, saveAuthToken } from '../../../api/auth';
+import { login as apiLogin, saveAuthToken } from '../../../api/auths/auth';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),

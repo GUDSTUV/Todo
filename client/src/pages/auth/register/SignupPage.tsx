@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { initGoogleAuth, handleGoogleSignup } from '../../../utils/googleAuth';
-import { signup as apiSignup, saveAuthToken } from '../../../api/auth';
+import { signup as apiSignup, saveAuthToken } from '../../../api/auths/auth';
 
 const signupSchema = z
   .object({

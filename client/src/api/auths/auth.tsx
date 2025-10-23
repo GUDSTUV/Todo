@@ -1,31 +1,7 @@
+import type { AuthResponse, LoginData, SignupData } from "./auth.type";
+
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-export interface SignupData {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export interface LoginData {
-  email: string;
-  password: string;
-}
-
-export interface AuthResponse {
-  message: string;
-  token: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    preferences: {
-      theme: string;
-      timezone: string;
-      language: string;
-    };
-  };
-}
-
 export const signup = async (data: SignupData): Promise<AuthResponse> => {
   const response = await fetch(`${API_BASE_URL}/auth/signup`, {
     method: 'POST',
