@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useCreateTask } from '../../hooks/useTasks';
+import { useCreateTask } from '../../hooks/useTasks/useTasks';
 import { useUIStore } from '../../store/uiStore';
-import { Button } from '../../components/ui/Button';
+import { Button } from '../../components/ui/button/Button';
 
 export const QuickAdd = () => {
   const [title, setTitle] = useState('');

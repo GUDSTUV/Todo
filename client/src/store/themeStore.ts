@@ -1,0 +1,74 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+type Theme = 'light' | 'dark' | 'system';
+
+interface ThemeStore {
+  theme: Theme;
+  actualTheme: 'light' | 'dark';
+  setTheme: (theme: Theme) => void;
+  initTheme: () => void;
+}
+
+const getSystemTheme = (): 'light' | 'dark' => {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  return 'light';
+};
+
+const applyTheme = (theme: 'light' | 'dark') => {
+  const root = document.documentElement;
+  if (theme === 'dark') {
+    root.classList.add('dark');
+  } else {
+    root.classList.remove('dark');
+  }
+};
+
+export const useThemeStore = create<ThemeStore>()(
+  persist(
+    (set, get) => ({
+      theme: 'system',
+      actualTheme: 'light',
+
+      setTheme: (theme: Theme) => {
+        const actualTheme = theme === 'system' ? getSystemTheme() : theme;
+        applyTheme(actualTheme);
+        set({ theme, actualTheme });
+      },
+
+      initTheme: () => {
+        const { theme } = get();
+        const actualTheme = theme === 'system' ? getSystemTheme() : theme;
+        applyTheme(actualTheme);
+        set({ actualTheme });
+
+        // Listen for system theme changes
+        if (typeof window !== 'undefined' && window.matchMedia) {
+          const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+          const handleChange = (e: MediaQueryListEvent) => {
+            const { theme } = get();
+            if (theme === 'system') {
+              const newActualTheme = e.matches ? 'dark' : 'light';
+              applyTheme(newActualTheme);
+              set({ actualTheme: newActualTheme });
+            }
+          };
+          mediaQuery.addEventListener('change', handleChange);
+        }
+      },
+    }),
+    {
+      name: 'theme-storage',
+      onRehydrateStorage: () => (state) => {
+        // After hydration, apply the persisted theme to the DOM
+        if (state) {
+          const actualTheme = state.theme === 'system' ? getSystemTheme() : state.theme;
+          applyTheme(actualTheme);
+          state.actualTheme = actualTheme;
+        }
+      },
+    }
+  )
+);
