@@ -35,22 +35,30 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const userSchema = new mongoose_1.Schema({
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true, // allow multiple docs without googleId
+    },
     name: {
         type: String,
-        required: [true, 'Please provide your name'],
+        required: [true, "Please provide your name"],
         trim: true,
     },
     email: {
         type: String,
-        required: [true, 'Please provide your email'],
+        required: [true, "Please provide your email"],
         unique: true,
         lowercase: true,
         trim: true,
-        match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
+        match: [/^\S+@\S+\.\S+$/, "Please provide a valid email"],
     },
     passwordHash: {
         type: String,
-        required: [true, 'Password is required'],
+        required: function () {
+            // require password if not a Google OAuth account
+            return !this.googleId;
+        },
     },
     avatarUrl: {
         type: String,
@@ -58,16 +66,16 @@ const userSchema = new mongoose_1.Schema({
     preferences: {
         theme: {
             type: String,
-            enum: ['light', 'dark', 'system'],
-            default: 'system',
+            enum: ["light", "dark", "system"],
+            default: "system",
         },
         timezone: {
             type: String,
-            default: 'UTC',
+            default: "UTC",
         },
         language: {
             type: String,
-            default: 'en',
+            default: "en",
         },
     },
 }, {
@@ -75,5 +83,5 @@ const userSchema = new mongoose_1.Schema({
 });
 // Index for fast email lookups
 userSchema.index({ email: 1 });
-const User = mongoose_1.default.model('User', userSchema);
+const User = mongoose_1.default.model("User", userSchema);
 exports.default = User;

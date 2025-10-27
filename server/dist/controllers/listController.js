@@ -12,7 +12,7 @@ const getLists = async (req, res) => {
         const userId = req.user.userId;
         const { includeArchived = false } = req.query;
         const query = { userId };
-        if (!includeArchived || includeArchived === 'false') {
+        if (!includeArchived || includeArchived === "false") {
             query.isArchived = false;
         }
         const lists = await List_1.default.find(query).sort({ order: 1 }).lean();
@@ -23,11 +23,11 @@ const getLists = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Get lists error:', error);
+        console.error("Get lists error:", error);
         res.status(500).json({
             success: false,
-            error: 'Failed to fetch lists',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to fetch lists",
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     }
 };
@@ -39,7 +39,7 @@ const getList = async (req, res) => {
         const { id } = req.params;
         const list = await List_1.default.findOne({ _id: id, userId });
         if (!list) {
-            res.status(404).json({ success: false, error: 'List not found' });
+            res.status(404).json({ success: false, error: "List not found" });
             return;
         }
         res.status(200).json({
@@ -48,11 +48,11 @@ const getList = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Get list error:', error);
+        console.error("Get list error:", error);
         res.status(500).json({
             success: false,
-            error: 'Failed to fetch list',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to fetch list",
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     }
 };
@@ -78,19 +78,19 @@ const createList = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Create list error:', error);
-        if (error.name === 'ValidationError') {
+        console.error("Create list error:", error);
+        if (error.name === "ValidationError") {
             res.status(400).json({
                 success: false,
-                error: 'Validation error',
-                details: error.errors
+                error: "Validation error",
+                details: error.errors,
             });
             return;
         }
         res.status(500).json({
             success: false,
-            error: 'Failed to create list',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to create list",
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     }
 };
@@ -103,7 +103,7 @@ const updateList = async (req, res) => {
         const updates = req.body;
         const list = await List_1.default.findOne({ _id: id, userId });
         if (!list) {
-            res.status(404).json({ success: false, error: 'List not found' });
+            res.status(404).json({ success: false, error: "List not found" });
             return;
         }
         // Handle default list change
@@ -111,7 +111,7 @@ const updateList = async (req, res) => {
             await List_1.default.updateMany({ userId, isDefault: true }, { isDefault: false });
         }
         // Update list fields
-        Object.keys(updates).forEach(key => {
+        Object.keys(updates).forEach((key) => {
             list[key] = updates[key];
         });
         await list.save();
@@ -121,19 +121,19 @@ const updateList = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Update list error:', error);
-        if (error.name === 'ValidationError') {
+        console.error("Update list error:", error);
+        if (error.name === "ValidationError") {
             res.status(400).json({
                 success: false,
-                error: 'Validation error',
-                details: error.errors
+                error: "Validation error",
+                details: error.errors,
             });
             return;
         }
         res.status(500).json({
             success: false,
-            error: 'Failed to update list',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to update list",
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     }
 };
@@ -146,12 +146,14 @@ const deleteList = async (req, res) => {
         const { moveTasksToListId } = req.query;
         const list = await List_1.default.findOne({ _id: id, userId });
         if (!list) {
-            res.status(404).json({ success: false, error: 'List not found' });
+            res.status(404).json({ success: false, error: "List not found" });
             return;
         }
         // Prevent deletion of default list
         if (list.isDefault) {
-            res.status(400).json({ success: false, error: 'Cannot delete default list' });
+            res
+                .status(400)
+                .json({ success: false, error: "Cannot delete default list" });
             return;
         }
         // Handle tasks in the list
@@ -159,7 +161,9 @@ const deleteList = async (req, res) => {
             // Move tasks to another list
             const targetList = await List_1.default.findOne({ _id: moveTasksToListId, userId });
             if (!targetList) {
-                res.status(404).json({ success: false, error: 'Target list not found' });
+                res
+                    .status(404)
+                    .json({ success: false, error: "Target list not found" });
                 return;
             }
             await Task_1.default.updateMany({ listId: id, userId }, { listId: moveTasksToListId });
@@ -172,15 +176,15 @@ const deleteList = async (req, res) => {
         await list.deleteOne();
         res.status(200).json({
             success: true,
-            message: 'List deleted successfully',
+            message: "List deleted successfully",
         });
     }
     catch (error) {
-        console.error('Delete list error:', error);
+        console.error("Delete list error:", error);
         res.status(500).json({
             success: false,
-            error: 'Failed to delete list',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to delete list",
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     }
 };
@@ -193,7 +197,7 @@ const archiveList = async (req, res) => {
         const { isArchived } = req.body;
         const list = await List_1.default.findOne({ _id: id, userId });
         if (!list) {
-            res.status(404).json({ success: false, error: 'List not found' });
+            res.status(404).json({ success: false, error: "List not found" });
             return;
         }
         list.isArchived = isArchived;
@@ -204,11 +208,11 @@ const archiveList = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Archive list error:', error);
+        console.error("Archive list error:", error);
         res.status(500).json({
             success: false,
-            error: 'Failed to archive list',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to archive list",
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     }
 };
@@ -219,14 +223,16 @@ const bulkUpdateLists = async (req, res) => {
         const userId = req.user.userId;
         const { updates } = req.body; // Array of { id, updates }
         if (!Array.isArray(updates)) {
-            res.status(400).json({ success: false, error: 'Updates must be an array' });
+            res
+                .status(400)
+                .json({ success: false, error: "Updates must be an array" });
             return;
         }
         const results = [];
         for (const update of updates) {
             const list = await List_1.default.findOne({ _id: update.id, userId });
             if (list) {
-                Object.keys(update.updates).forEach(key => {
+                Object.keys(update.updates).forEach((key) => {
                     list[key] = update.updates[key];
                 });
                 await list.save();
@@ -240,11 +246,11 @@ const bulkUpdateLists = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Bulk update lists error:', error);
+        console.error("Bulk update lists error:", error);
         res.status(500).json({
             success: false,
-            error: 'Failed to bulk update lists',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to bulk update lists",
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     }
 };
@@ -256,7 +262,7 @@ const refreshListTaskCount = async (req, res) => {
         const { id } = req.params;
         const list = await List_1.default.findOne({ _id: id, userId });
         if (!list) {
-            res.status(404).json({ success: false, error: 'List not found' });
+            res.status(404).json({ success: false, error: "List not found" });
             return;
         }
         await list.updateTaskCount();
@@ -266,11 +272,11 @@ const refreshListTaskCount = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Refresh list task count error:', error);
+        console.error("Refresh list task count error:", error);
         res.status(500).json({
             success: false,
-            error: 'Failed to refresh task count',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to refresh task count",
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     }
 };

@@ -1,12 +1,47 @@
 // Google OAuth Configuration
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
+// Type definitions for Google Identity Services
+interface GoogleCredentialResponse {
+  credential?: string;
+  select_by?: string;
+  clientId?: string;
+}
+
+type PromptMomentNotification = {
+  isNotDisplayed: () => boolean;
+  isSkippedMoment: () => boolean;
+  isDismissedMoment: () => boolean;
+};
+
+interface GoogleAccounts {
+  id: {
+    initialize: (config: {
+      client_id: string;
+      callback: (response: GoogleCredentialResponse) => void;
+    }) => void;
+    prompt: (cb?: (notification: PromptMomentNotification) => void) => void;
+    renderButton?: (
+      parent: HTMLElement,
+      options: Record<string, unknown>,
+    ) => void;
+  };
+}
+
+interface WindowWithGoogle extends Window {
+  google?: {
+    accounts: GoogleAccounts;
+  };
+}
+
+declare const window: WindowWithGoogle;
+
 let _credentialCallback: ((credential: string) => Promise<void> | void) | null = null;
 let _initialized = false;
 
 const ensureScript = (): Promise<void> =>
   new Promise((resolve) => {
-    if ((window as any).google) return resolve();
+    if (window.google) return resolve();
     const existing = document.querySelector("script[src='https://accounts.google.com/gsi/client']");
     if (existing) {
       existing.addEventListener('load', () => resolve());
@@ -28,10 +63,10 @@ export const initGoogleAuth = async (onCredential?: (credential: string) => Prom
   }
   await ensureScript();
   try {
-    if (!(window as any).google || _initialized) return;
-    (window as any).google.accounts.id.initialize({
+    if (!window.google || _initialized) return;
+    window.google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
-      callback: (resp: any) => {
+      callback: (resp: GoogleCredentialResponse) => {
         const credential = resp?.credential;
         if (credential) {
           if (_credentialCallback) _credentialCallback(credential);
@@ -53,8 +88,33 @@ export const handleGoogleLogin = async () => {
     }
     await ensureScript();
     // prompt the credential chooser (the callback passed to initGoogleAuth will receive the token)
-    if ((window as any).google && (window as any).google.accounts && (window as any).google.accounts.id) {
-      (window as any).google.accounts.id.prompt();
+    const serverApi = (import.meta.env.VITE_API_URL as string) || 'http://localhost:5000/api';
+    const serverBase = serverApi.replace(/\/?api\/?$/, '');
+    const oauthRedirectUrl = `${serverBase}/api/auth/google`;
+
+    const fallbackToRedirect = () => {
+      // Fall back to the classic OAuth redirect flow
+      window.location.href = oauthRedirectUrl;
+    };
+
+    if (window.google?.accounts?.id) {
+      // Try One Tap prompt; if it's not displayed or skipped, fall back to redirect flow
+      let didCallback = false;
+      const timer = setTimeout(() => {
+        if (!didCallback) fallbackToRedirect();
+      }, 1500);
+
+      window.google.accounts.id.prompt((notification) => {
+        didCallback = true;
+        clearTimeout(timer);
+        if (
+          notification.isNotDisplayed() ||
+          notification.isSkippedMoment() ||
+          notification.isDismissedMoment()
+        ) {
+          fallbackToRedirect();
+        }
+      });
     } else {
       alert('Google SDK failed to load.');
     }

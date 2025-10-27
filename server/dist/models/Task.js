@@ -48,36 +48,36 @@ const subtaskSchema = new mongoose_1.Schema({
 const taskSchema = new mongoose_1.Schema({
     userId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: "User",
         required: true,
         index: true,
     },
     listId: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'List',
+        ref: "List",
         index: true,
     },
     title: {
         type: String,
-        required: [true, 'Task title is required'],
+        required: [true, "Task title is required"],
         trim: true,
-        maxlength: [500, 'Title cannot exceed 500 characters'],
+        maxlength: [500, "Title cannot exceed 500 characters"],
     },
     description: {
         type: String,
         trim: true,
-        maxlength: [5000, 'Description cannot exceed 5000 characters'],
+        maxlength: [5000, "Description cannot exceed 5000 characters"],
     },
     status: {
         type: String,
-        enum: ['todo', 'in-progress', 'done'],
-        default: 'todo',
+        enum: ["todo", "in-progress", "done"],
+        default: "todo",
         index: true,
     },
     priority: {
         type: String,
-        enum: ['low', 'medium', 'high', 'urgent'],
-        default: 'medium',
+        enum: ["low", "medium", "high", "urgent"],
+        default: "medium",
         index: true,
     },
     tags: {
@@ -99,7 +99,7 @@ const taskSchema = new mongoose_1.Schema({
     recurrence: {
         frequency: {
             type: String,
-            enum: ['daily', 'weekly', 'monthly', 'yearly'],
+            enum: ["daily", "weekly", "monthly", "yearly"],
         },
         interval: {
             type: Number,
@@ -112,12 +112,14 @@ const taskSchema = new mongoose_1.Schema({
         default: 0,
         index: true,
     },
-    attachments: [{
+    attachments: [
+        {
             name: String,
             url: String,
             size: Number,
             mimeType: String,
-        }],
+        },
+    ],
     completedAt: Date,
     syncVersion: {
         type: Number,
@@ -136,17 +138,19 @@ taskSchema.index({ userId: 1, listId: 1, order: 1 });
 taskSchema.index({ userId: 1, dueDate: 1 });
 taskSchema.index({ userId: 1, tags: 1 });
 // Update lastModified on save
-taskSchema.pre('save', function (next) {
+taskSchema.pre("save", function (next) {
     this.lastModified = new Date();
     this.syncVersion += 1;
     // Update completedAt when status changes to done
-    if (this.isModified('status') && this.status === 'done' && !this.completedAt) {
+    if (this.isModified("status") &&
+        this.status === "done" &&
+        !this.completedAt) {
         this.completedAt = new Date();
     }
-    else if (this.isModified('status') && this.status !== 'done') {
+    else if (this.isModified("status") && this.status !== "done") {
         this.completedAt = undefined;
     }
     next();
 });
-const Task = mongoose_1.default.model('Task', taskSchema);
+const Task = mongoose_1.default.model("Task", taskSchema);
 exports.default = Task;

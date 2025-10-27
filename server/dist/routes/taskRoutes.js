@@ -11,14 +11,13 @@ const router = express_1.default.Router();
 // All routes require authentication
 router.use(auth_1.protect);
 // Task statistics
-router.get('/stats', taskController_1.getTaskStats);
+router.get("/stats", taskController_1.getTaskStats);
 // Bulk operations
-router.patch('/bulk', taskController_1.bulkUpdateTasks);
+router.patch("/bulk", taskController_1.bulkUpdateTasks);
 // CRUD operations
-router.route('/')
-    .get(taskController_1.getTasks)
-    .post(validation_1.validateTask, taskController_1.createTask);
-router.route('/:id')
+router.route("/").get(taskController_1.getTasks).post(validation_1.validateTask, taskController_1.createTask);
+router
+    .route("/:id")
     .get(taskController_1.getTask)
     .patch(validation_1.validateTask, taskController_1.updateTask)
     .delete(taskController_1.deleteTask);

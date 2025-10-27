@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IList extends Document {
   userId: mongoose.Types.ObjectId;
@@ -20,29 +20,29 @@ const listSchema = new Schema<IList>(
   {
     userId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
       index: true,
     },
     name: {
       type: String,
-      required: [true, 'List name is required'],
+      required: [true, "List name is required"],
       trim: true,
-      maxlength: [100, 'List name cannot exceed 100 characters'],
+      maxlength: [100, "List name cannot exceed 100 characters"],
     },
     description: {
       type: String,
       trim: true,
-      maxlength: [500, 'Description cannot exceed 500 characters'],
+      maxlength: [500, "Description cannot exceed 500 characters"],
     },
     color: {
       type: String,
-      default: '#3B82F6', // Blue
-      match: [/^#[0-9A-F]{6}$/i, 'Color must be a valid hex color'],
+      default: "#3B82F6", // Blue
+      match: [/^#[0-9A-F]{6}$/i, "Color must be a valid hex color"],
     },
     icon: {
       type: String,
-      default: 'list',
+      default: "list",
     },
     order: {
       type: Number,
@@ -72,7 +72,7 @@ const listSchema = new Schema<IList>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Compound indexes for queries
@@ -80,22 +80,22 @@ listSchema.index({ userId: 1, isArchived: 1, order: 1 });
 listSchema.index({ userId: 1, isDefault: 1 });
 
 // Update lastModified on save
-listSchema.pre('save', function(next) {
+listSchema.pre("save", function (next) {
   this.lastModified = new Date();
   this.syncVersion += 1;
   next();
 });
 
 // Method to update task count
-listSchema.methods.updateTaskCount = async function() {
-  const Task = mongoose.model('Task');
-  this.taskCount = await Task.countDocuments({ 
+listSchema.methods.updateTaskCount = async function () {
+  const Task = mongoose.model("Task");
+  this.taskCount = await Task.countDocuments({
     listId: this._id,
-    status: { $ne: 'done' } 
+    status: { $ne: "done" },
   });
   await this.save();
 };
 
-const List = mongoose.model<IList>('List', listSchema);
+const List = mongoose.model<IList>("List", listSchema);
 
 export default List;

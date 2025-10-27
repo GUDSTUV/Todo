@@ -11,11 +11,11 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const getTasks = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const { listId, status, priority, tags, search, dueDate, sortBy = 'order', sortOrder = 'asc' } = req.query;
+        const { listId, status, priority, tags, search, dueDate, sortBy = "order", sortOrder = "asc", } = req.query;
         // Build query
         const query = { userId };
         if (listId) {
-            if (listId === 'null') {
+            if (listId === "null") {
                 query.listId = null;
             }
             else {
@@ -34,8 +34,8 @@ const getTasks = async (req, res) => {
         }
         if (search) {
             query.$or = [
-                { title: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } },
+                { title: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } },
             ];
         }
         if (dueDate) {
@@ -46,7 +46,7 @@ const getTasks = async (req, res) => {
         }
         // Sort
         const sort = {};
-        sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+        sort[sortBy] = sortOrder === "desc" ? -1 : 1;
         const tasks = await Task_1.default.find(query).sort(sort).lean();
         res.status(200).json({
             success: true,
@@ -55,11 +55,11 @@ const getTasks = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Get tasks error:', error);
+        console.error("Get tasks error:", error);
         res.status(500).json({
             success: false,
-            error: 'Failed to fetch tasks',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to fetch tasks",
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     }
 };
@@ -71,7 +71,7 @@ const getTask = async (req, res) => {
         const { id } = req.params;
         const task = await Task_1.default.findOne({ _id: id, userId });
         if (!task) {
-            res.status(404).json({ success: false, error: 'Task not found' });
+            res.status(404).json({ success: false, error: "Task not found" });
             return;
         }
         res.status(200).json({
@@ -80,11 +80,11 @@ const getTask = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Get task error:', error);
+        console.error("Get task error:", error);
         res.status(500).json({
             success: false,
-            error: 'Failed to fetch task',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to fetch task",
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     }
 };
@@ -98,7 +98,7 @@ const createTask = async (req, res) => {
         if (taskData.listId) {
             const list = await List_1.default.findOne({ _id: taskData.listId, userId });
             if (!list) {
-                res.status(404).json({ success: false, error: 'List not found' });
+                res.status(404).json({ success: false, error: "List not found" });
                 return;
             }
         }
@@ -121,19 +121,19 @@ const createTask = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Create task error:', error);
-        if (error.name === 'ValidationError') {
+        console.error("Create task error:", error);
+        if (error.name === "ValidationError") {
             res.status(400).json({
                 success: false,
-                error: 'Validation error',
-                details: error.errors
+                error: "Validation error",
+                details: error.errors,
             });
             return;
         }
         res.status(500).json({
             success: false,
-            error: 'Failed to create task',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to create task",
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     }
 };
@@ -148,18 +148,18 @@ const updateTask = async (req, res) => {
         if (updates.listId) {
             const list = await List_1.default.findOne({ _id: updates.listId, userId });
             if (!list) {
-                res.status(404).json({ success: false, error: 'List not found' });
+                res.status(404).json({ success: false, error: "List not found" });
                 return;
             }
         }
         const task = await Task_1.default.findOne({ _id: id, userId });
         if (!task) {
-            res.status(404).json({ success: false, error: 'Task not found' });
+            res.status(404).json({ success: false, error: "Task not found" });
             return;
         }
         const oldListId = task.listId;
         // Update task fields
-        Object.keys(updates).forEach(key => {
+        Object.keys(updates).forEach((key) => {
             task[key] = updates[key];
         });
         await task.save();
@@ -182,19 +182,19 @@ const updateTask = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Update task error:', error);
-        if (error.name === 'ValidationError') {
+        console.error("Update task error:", error);
+        if (error.name === "ValidationError") {
             res.status(400).json({
                 success: false,
-                error: 'Validation error',
-                details: error.errors
+                error: "Validation error",
+                details: error.errors,
             });
             return;
         }
         res.status(500).json({
             success: false,
-            error: 'Failed to update task',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to update task",
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     }
 };
@@ -206,7 +206,7 @@ const deleteTask = async (req, res) => {
         const { id } = req.params;
         const task = await Task_1.default.findOne({ _id: id, userId });
         if (!task) {
-            res.status(404).json({ success: false, error: 'Task not found' });
+            res.status(404).json({ success: false, error: "Task not found" });
             return;
         }
         const listId = task.listId;
@@ -220,15 +220,15 @@ const deleteTask = async (req, res) => {
         }
         res.status(200).json({
             success: true,
-            message: 'Task deleted successfully',
+            message: "Task deleted successfully",
         });
     }
     catch (error) {
-        console.error('Delete task error:', error);
+        console.error("Delete task error:", error);
         res.status(500).json({
             success: false,
-            error: 'Failed to delete task',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to delete task",
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     }
 };
@@ -239,14 +239,16 @@ const bulkUpdateTasks = async (req, res) => {
         const userId = req.user.userId;
         const { updates } = req.body; // Array of { id, updates }
         if (!Array.isArray(updates)) {
-            res.status(400).json({ success: false, error: 'Updates must be an array' });
+            res
+                .status(400)
+                .json({ success: false, error: "Updates must be an array" });
             return;
         }
         const results = [];
         for (const update of updates) {
             const task = await Task_1.default.findOne({ _id: update.id, userId });
             if (task) {
-                Object.keys(update.updates).forEach(key => {
+                Object.keys(update.updates).forEach((key) => {
                     task[key] = update.updates[key];
                 });
                 await task.save();
@@ -260,11 +262,11 @@ const bulkUpdateTasks = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Bulk update tasks error:', error);
+        console.error("Bulk update tasks error:", error);
         res.status(500).json({
             success: false,
-            error: 'Failed to bulk update tasks',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to bulk update tasks",
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     }
 };
@@ -275,35 +277,45 @@ const getTaskStats = async (req, res) => {
         const userId = req.user.userId;
         const [total, completed, inProgress, overdue] = await Promise.all([
             Task_1.default.countDocuments({ userId }),
-            Task_1.default.countDocuments({ userId, status: 'done' }),
-            Task_1.default.countDocuments({ userId, status: 'in-progress' }),
+            Task_1.default.countDocuments({ userId, status: "done" }),
+            Task_1.default.countDocuments({ userId, status: "in-progress" }),
             Task_1.default.countDocuments({
                 userId,
-                status: { $ne: 'done' },
-                dueDate: { $lt: new Date() }
+                status: { $ne: "done" },
+                dueDate: { $lt: new Date() },
             }),
         ]);
         const byPriority = await Task_1.default.aggregate([
-            { $match: { userId: new mongoose_1.default.Types.ObjectId(userId), status: { $ne: 'done' } } },
-            { $group: { _id: '$priority', count: { $sum: 1 } } },
+            {
+                $match: {
+                    userId: new mongoose_1.default.Types.ObjectId(userId),
+                    status: { $ne: "done" },
+                },
+            },
+            { $group: { _id: "$priority", count: { $sum: 1 } } },
         ]);
         const byList = await Task_1.default.aggregate([
-            { $match: { userId: new mongoose_1.default.Types.ObjectId(userId), status: { $ne: 'done' } } },
+            {
+                $match: {
+                    userId: new mongoose_1.default.Types.ObjectId(userId),
+                    status: { $ne: "done" },
+                },
+            },
             {
                 $group: {
-                    _id: '$listId',
-                    count: { $sum: 1 }
-                }
+                    _id: "$listId",
+                    count: { $sum: 1 },
+                },
             },
             {
                 $lookup: {
-                    from: 'lists',
-                    localField: '_id',
-                    foreignField: '_id',
-                    as: 'list'
-                }
+                    from: "lists",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "list",
+                },
             },
-            { $unwind: { path: '$list', preserveNullAndEmptyArrays: true } },
+            { $unwind: { path: "$list", preserveNullAndEmptyArrays: true } },
         ]);
         res.status(200).json({
             success: true,
@@ -319,11 +331,11 @@ const getTaskStats = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Get task stats error:', error);
+        console.error("Get task stats error:", error);
         res.status(500).json({
             success: false,
-            error: 'Failed to fetch task statistics',
-            message: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: "Failed to fetch task statistics",
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
         });
     }
 };

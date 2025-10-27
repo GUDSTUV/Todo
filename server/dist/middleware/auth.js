@@ -5,18 +5,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authorize = exports.protect = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this-in-production";
 const protect = async (req, res, next) => {
     try {
         let token;
         // Check for token in Authorization header
-        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-            token = req.headers.authorization.split(' ')[1];
+        if (req.headers.authorization &&
+            req.headers.authorization.startsWith("Bearer")) {
+            token = req.headers.authorization.split(" ")[1];
         }
         if (!token) {
             res.status(401).json({
                 success: false,
-                error: 'Not authorized to access this route'
+                error: "Not authorized to access this route",
             });
             return;
         }
@@ -27,19 +28,19 @@ const protect = async (req, res, next) => {
             req.user = decoded;
             next();
         }
-        catch (error) {
+        catch {
             res.status(401).json({
                 success: false,
-                error: 'Invalid or expired token'
+                error: "Invalid or expired token",
             });
             return;
         }
     }
     catch (error) {
-        console.error('Auth middleware error:', error);
+        console.error("Auth middleware error:", error);
         res.status(500).json({
             success: false,
-            error: 'Server error during authentication'
+            error: "Server error during authentication",
         });
     }
 };
@@ -51,7 +52,7 @@ const authorize = (...roles) => {
         if (!roles.includes(userRole)) {
             res.status(403).json({
                 success: false,
-                error: 'You do not have permission to perform this action'
+                error: "You do not have permission to perform this action",
             });
             return;
         }

@@ -13,20 +13,27 @@ import { useDebounce } from '../../hooks/useDebounce';
 
 const Dashboard = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
+  
+  console.log('[Dashboard] Render - isAuthenticated:', isAuthenticated, 'user:', user, 'token:', token ? 'present' : 'missing');
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<FilterOptions>({
     sortBy: 'createdAt',
     sortOrder: 'desc',
   });
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
 
   // Debounce search query to avoid excessive API calls
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   if (!isAuthenticated) {
+    console.log('[Dashboard] Not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
+  console.log('[Dashboard] Authenticated, rendering dashboard');
   return (
     <AppShell>
       <ListSidebar />

@@ -1,4 +1,4 @@
-import express from 'express';
+import express from "express";
 import {
   getTasks,
   getTask,
@@ -7,9 +7,9 @@ import {
   deleteTask,
   bulkUpdateTasks,
   getTaskStats,
-} from '../controllers/taskController';
-import { protect } from '../middleware/auth';
-import { validateTask } from '../middleware/validation';
+} from "../controllers/taskController";
+import { protect } from "../middleware/auth";
+import { validateTask } from "../middleware/validation";
 
 const router = express.Router();
 
@@ -17,17 +17,16 @@ const router = express.Router();
 router.use(protect);
 
 // Task statistics
-router.get('/stats', getTaskStats);
+router.get("/stats", getTaskStats);
 
 // Bulk operations
-router.patch('/bulk', bulkUpdateTasks);
+router.patch("/bulk", bulkUpdateTasks);
 
 // CRUD operations
-router.route('/')
-  .get(getTasks)
-  .post(validateTask, createTask);
+router.route("/").get(getTasks).post(validateTask, createTask);
 
-router.route('/:id')
+router
+  .route("/:id")
   .get(getTask)
   .patch(validateTask, updateTask)
   .delete(deleteTask);
