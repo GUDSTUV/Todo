@@ -8,16 +8,53 @@ interface EmailOptions {
 }
 
 export const sendEmail = async (options: EmailOptions): Promise<void> => {
-  // Create transporter
-  const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || "smtp.gmail.com",
-    port: parseInt(process.env.EMAIL_PORT || "587"),
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: process.env.EMAIL_USERNAME,
-      pass: process.env.EMAIL_PASSWORD,
-    },
+  // Prepare SMTP config from env with sensible defaults and sanitization
+  const host = (process.env.EMAIL_HOST || "smtp.gmail.com").trim();
+  const port = Number.parseInt(process.env.EMAIL_PORT || "587", 10);
+  const user = (process.env.EMAIL_USERNAME || "").trim();
+  // Google shows app passwords with spaces for readability; remove any whitespace just in case
+  const pass = (process.env.EMAIL_PASSWORD || "").replace(/\s+/g, "");
+
+  // Create primary transporter from env
+  const primaryTransporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465, // 465 uses SSL, 587/25 start as insecure and upgrade via STARTTLS
+    auth: user && pass ? { user, pass } : undefined,
   });
+
+  // We'll use this variable to send emails (might switch to Ethereal in non-prod)
+  let transporter = primaryTransporter;
+
+  // Verify SMTP connection for clearer error messages; if it fails in non-prod, try Ethereal fallback
+  try {
+    await primaryTransporter.verify();
+  } catch (err) {
+    console.error(
+      "[sendEmail] SMTP verification failed:",
+      (err as any)?.message || err
+    );
+    if ((process.env.NODE_ENV || "development") !== "production") {
+      // Fallback to a test account so development can proceed
+      const testAccount = await nodemailer.createTestAccount();
+      transporter = nodemailer.createTransport({
+        host: "smtp.ethereal.email",
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+      console.warn(
+        "[sendEmail] Using Ethereal test SMTP account for development."
+      );
+    } else {
+      throw new Error(
+        "Email service is not configured correctly. Please check EMAIL_* settings."
+      );
+    }
+  }
 
   // Define email options
   const mailOptions = {
@@ -29,12 +66,27 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
   };
 
   // Send email
-  await transporter.sendMail(mailOptions);
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    // If using Ethereal (for dev), output preview URL
+    const preview = (nodemailer as any).getTestMessageUrl?.(info);
+    if (preview) {
+      console.log("[sendEmail] Preview URL:", preview);
+    }
+  } catch (err) {
+    console.error(
+      "[sendEmail] Failed to send email:",
+      (err as any)?.message || err
+    );
+    throw new Error(
+      "Failed to send email via SMTP. Check credentials and provider settings."
+    );
+  }
 };
 
 export const sendPasswordResetEmail = async (
   email: string,
-  resetUrl: string,
+  resetUrl: string
 ): Promise<void> => {
   const message = `
     You are receiving this email because you (or someone else) has requested the reset of a password.

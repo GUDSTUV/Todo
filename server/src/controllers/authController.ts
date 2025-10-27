@@ -51,7 +51,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN } as SignOptions,
+      { expiresIn: JWT_EXPIRES_IN } as SignOptions
     );
 
     // Return user data and token
@@ -109,7 +109,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN } as SignOptions,
+      { expiresIn: JWT_EXPIRES_IN } as SignOptions
     );
 
     // Return user data and token
@@ -131,7 +131,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
 export const googleOneTap = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
     const { credential } = req.body as { credential?: string };
@@ -177,7 +177,7 @@ export const googleOneTap = async (
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN } as SignOptions,
+      { expiresIn: JWT_EXPIRES_IN } as SignOptions
     );
 
     res.status(200).json({
@@ -233,7 +233,7 @@ export const me = async (req: Request, res: Response): Promise<void> => {
 // @access  Public
 export const forgotPassword = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
     const { email } = req.body;
@@ -303,7 +303,7 @@ export const forgotPassword = async (
 // @access  Public
 export const resetPassword = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
     const { resetToken } = req.params;
@@ -355,7 +355,7 @@ export const resetPassword = async (
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN } as SignOptions,
+      { expiresIn: JWT_EXPIRES_IN } as SignOptions
     );
 
     res.status(200).json({

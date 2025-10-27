@@ -7,6 +7,8 @@ import { useEffect } from "react"
 import Dashboard from "./pages/dashboard/Dashboard"
 import LoginPage from "./pages/auth/login/LoginPage"
 import SignupPage from "./pages/auth/register/SignupPage"
+import ForgotPasswordPage from "./pages/auth/forgotPassword/ForgotPasswordPage"
+import ResetPasswordPage from "./pages/auth/resetPassword/ResetPasswordPage"
 import { useAuthStore } from "./store/authStore"
 import api from "./api/client/client"
 
@@ -22,6 +24,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password/:resetToken" element={<ResetPasswordPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
       </BrowserRouter>

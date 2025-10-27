@@ -115,7 +115,7 @@ const ForgotPasswordPage = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   onBlur={handleBlur}
                   error={touched && errors.email ? errors.email : undefined}
-                  placeholder="you@example.com"
+                  placeholder=""
                   required
                 />
               </div>
