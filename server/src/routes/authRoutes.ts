@@ -1,5 +1,12 @@
 import express from "express";
-import { signup, login, googleOneTap, me } from "../controllers/authController";
+import {
+  signup,
+  login,
+  googleOneTap,
+  me,
+  forgotPassword,
+  resetPassword,
+} from "../controllers/authController";
 import { validateSignup, validateLogin } from "../middleware/validation";
 import passport from "passport";
 import jwt from "jsonwebtoken";
@@ -14,9 +21,15 @@ router.post("/signup", validateSignup, signup);
 // POST /api/auth/login
 router.post("/login", validateLogin, login);
 
+// POST /api/auth/forgot-password
+router.post("/forgot-password", forgotPassword);
+
+// PUT /api/auth/reset-password/:resetToken
+router.put("/reset-password/:resetToken", resetPassword);
+
 router.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] }),
+  passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
 router.get(
@@ -27,7 +40,7 @@ router.get(
     console.log("[OAuth callback] Creating JWT for user:", user.email);
     console.log(
       "[OAuth callback] Using JWT_SECRET:",
-      JWT_SECRET.substring(0, 10) + "...",
+      JWT_SECRET.substring(0, 10) + "..."
     );
 
     const token = jwt.sign(
@@ -35,19 +48,19 @@ router.get(
       JWT_SECRET,
       {
         expiresIn: "7d",
-      },
+      }
     );
     console.log(
       "[OAuth callback] Token created, preview:",
-      token.substring(0, 30) + "...",
+      token.substring(0, 30) + "..."
     );
     const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
     console.log(
       "[OAuth callback] Redirecting to:",
-      `${clientUrl}/dashboard?token=...`,
+      `${clientUrl}/dashboard?token=...`
     );
     res.redirect(`${clientUrl}/dashboard?token=${token}`);
-  },
+  }
 );
 
 // Google Identity Services (One Tap) endpoint
@@ -55,4 +68,7 @@ router.post("/google/verify", googleOneTap);
 
 // Get current authenticated user
 router.get("/me", protect, me);
+
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password/:token", resetPassword);
 export default router;

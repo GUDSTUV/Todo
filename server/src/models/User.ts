@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from "mongoose";
+import crypto from "crypto";
 
 export interface IUser extends Document {
   name: string;
@@ -6,6 +7,8 @@ export interface IUser extends Document {
   passwordHash?: string; // optional for OAuth users
   googleId?: string; // present for Google OAuth users
   avatarUrl?: string;
+  resetPasswordToken?: string;
+  resetPasswordExpire?: Date;
   preferences: {
     theme: "light" | "dark" | "system";
     timezone: string;
@@ -13,6 +16,7 @@ export interface IUser extends Document {
   };
   createdAt: Date;
   updatedAt: Date;
+  getResetPasswordToken(): string;
 }
 
 const userSchema = new Schema<IUser>(
@@ -46,6 +50,12 @@ const userSchema = new Schema<IUser>(
     avatarUrl: {
       type: String,
     },
+    resetPasswordToken: {
+      type: String,
+    },
+    resetPasswordExpire: {
+      type: Date,
+    },
     preferences: {
       theme: {
         type: String,
@@ -64,8 +74,25 @@ const userSchema = new Schema<IUser>(
   },
   {
     timestamps: true,
-  },
+  }
 );
+
+// Generate and hash password reset token
+userSchema.methods.getResetPasswordToken = function (): string {
+  // Generate token
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  // Hash token and set to resetPasswordToken field
+  this.resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  // Set expire to 10 minutes
+  this.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000);
+
+  return resetToken;
+};
 
 // Index for fast email lookups
 userSchema.index({ email: 1 });
