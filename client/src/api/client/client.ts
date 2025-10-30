@@ -13,7 +13,8 @@ export const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('authToken');
+    // Check both localStorage and sessionStorage for token
+    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -29,10 +30,20 @@ api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Only redirect to login if we're NOT already on login/auth pages
+      const currentPath = window.location.pathname;
+      const isAuthPage = currentPath.startsWith('/login') || 
+                        currentPath.startsWith('/signup') || 
+                        currentPath.startsWith('/forgot-password') || 
+                        currentPath.startsWith('/reset-password');
+      
+      if (!isAuthPage) {
+        // Unauthorized on protected page - clear token and redirect to login
+        localStorage.removeItem('authToken');
+        sessionStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

@@ -58,7 +58,6 @@ const ensureScript = (): Promise<void> =>
 export const initGoogleAuth = async (onCredential?: (credential: string) => Promise<void> | void) => {
   _credentialCallback = onCredential || null;
   if (!GOOGLE_CLIENT_ID) {
-    console.warn('VITE_GOOGLE_CLIENT_ID is not set');
     return;
   }
   await ensureScript();
@@ -68,15 +67,14 @@ export const initGoogleAuth = async (onCredential?: (credential: string) => Prom
       client_id: GOOGLE_CLIENT_ID,
       callback: (resp: GoogleCredentialResponse) => {
         const credential = resp?.credential;
-        if (credential) {
-          if (_credentialCallback) _credentialCallback(credential);
-          else console.log('Google credential received (no callback registered)');
+        if (credential && _credentialCallback) {
+          _credentialCallback(credential);
         }
       },
     });
     _initialized = true;
-  } catch (err) {
-    console.error('Failed to initialize Google Identity Services', err);
+  } catch {
+    // Failed to initialize Google Identity Services
   }
 };
 
@@ -118,8 +116,7 @@ export const handleGoogleLogin = async () => {
     } else {
       alert('Google SDK failed to load.');
     }
-  } catch (error) {
-    console.error('Google login error:', error);
+  } catch {
     alert('Failed to login with Google');
   }
 };

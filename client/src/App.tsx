@@ -15,6 +15,13 @@ import api from "./api/client/client"
 
 
 function App() {
+  const initializeAuth = useAuthStore((s) => s.initializeAuth);
+  
+  // Initialize auth state from storage on app load
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
   // Theme initialization moved to themeStore with auto-init
   return (
     <Providers>
@@ -44,29 +51,17 @@ const AuthBootstrapper = () => {
     const token = params.get('token');
     if (!token) return;
 
-    console.log('[AuthBootstrapper] Token detected in URL, processing OAuth redirect...');
-    console.log('[AuthBootstrapper] Token value:', token);
-    
-    // Persist token so axios attaches it
-    localStorage.setItem('authToken', token);
-    console.log('[AuthBootstrapper] Token stored in localStorage');
-
     // Fetch current user profile, then complete login and clean URL
     (async () => {
       try {
-        console.log('[AuthBootstrapper] Fetching user profile from /auth/me...');
-        console.log('[AuthBootstrapper] Token from localStorage:', localStorage.getItem('authToken'));
+        // Temporarily set token for this request
+        localStorage.setItem('authToken', token);
         const resp = await api.get('/auth/me');
         const { user } = resp.data as { user: { id: string; name: string; email: string; preferences: { theme: 'light' | 'dark' | 'system'; timezone: string; language: string } } };
-        console.log('[AuthBootstrapper] User profile fetched:', user);
-        loginToStore(user, token);
-        console.log('[AuthBootstrapper] Login complete, navigating to dashboard...');
+        loginToStore(user, token, true); // Token from URL, remember the user (OAuth login defaults to remember)
         // Replace URL without the token param
         navigate('/dashboard', { replace: true });
-      } catch (err) {
-        console.error('[AuthBootstrapper] Failed to fetch user profile:', err);
-        const axiosErr = err as { response?: { status?: number; data?: unknown } };
-        console.error('[AuthBootstrapper] Error details - Status:', axiosErr.response?.status, 'Data:', axiosErr.response?.data);
+      } catch {
         // If fetching profile fails, send to login
         navigate('/login', { replace: true });
       }

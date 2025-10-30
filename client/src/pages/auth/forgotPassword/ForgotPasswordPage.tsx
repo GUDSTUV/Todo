@@ -43,17 +43,13 @@ const ForgotPasswordPage = () => {
 
     setIsLoading(true);
     try {
-      console.log("Requesting password reset for:", email);
-
-      const response = await api.post("/auth/forgot-password", { email });
-      console.log("Password reset response:", response.data);
+      await api.post("/auth/forgot-password", { email });
 
       setIsSuccess(true);
       toast.success(
         "If an account exists with this email, a password reset link has been sent."
       );
     } catch (error: unknown) {
-      console.error("Forgot password error:", error);
       const err = error as {
         response?: { data?: { error?: string }; status?: number };
         message?: string;
@@ -74,7 +70,7 @@ const ForgotPasswordPage = () => {
       <header className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
         <Link
           to="/"
-          className="text-2xl font-bold text-indigo-600 dark:text-indigo-400"
+          className="text-2xl font-bold text-blue-600 dark:text-blue-400"
         >
           Todu
         </Link>
@@ -93,8 +89,8 @@ const ForgotPasswordPage = () => {
                 your password.
               </p>
             ) : (
-              <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
-                <p className="text-sm text-green-800 dark:text-green-200">
+              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
                   ✓ If an account exists with this email, a password reset link
                   has been sent. Please check your inbox and spam folder.
                 </p>
@@ -136,7 +132,7 @@ const ForgotPasswordPage = () => {
           <div className="text-center space-y-2">
             <Link
               to="/login"
-              className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+              className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
             >
               Back to Login
             </Link>
@@ -149,7 +145,7 @@ const ForgotPasswordPage = () => {
                     setTouched(false);
                     setErrors({});
                   }}
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                  className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
                 >
                   Try a different email
                 </button>

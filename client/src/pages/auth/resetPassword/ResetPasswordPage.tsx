@@ -69,12 +69,9 @@ const ResetPasswordPage = () => {
 
     setIsLoading(true);
     try {
-      console.log("Resetting password with token:", resetToken);
-
       const response = await api.put(`/auth/reset-password/${resetToken}`, {
         password,
       });
-      console.log("Reset password response:", response.data);
 
       const { token, user } = response.data as {
         token: string;
@@ -90,11 +87,10 @@ const ResetPasswordPage = () => {
         };
       };
 
-      loginToStore(user, token);
+      loginToStore(user, token, true); // Default to remember me after password reset
       toast.success("Password reset successful! You are now logged in.");
       navigate("/dashboard");
     } catch (error: unknown) {
-      console.error("Reset password error:", error);
       const err = error as {
         response?: { data?: { error?: string }; status?: number };
         message?: string;
@@ -120,7 +116,7 @@ const ResetPasswordPage = () => {
       <header className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
         <Link
           to="/"
-          className="text-2xl font-bold text-indigo-600 dark:text-indigo-400"
+          className="text-2xl font-bold text-blue-600 dark:text-blue-400"
         >
           Todu
         </Link>
@@ -192,7 +188,7 @@ const ResetPasswordPage = () => {
           <div className="text-center">
             <Link
               to="/login"
-              className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+              className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
             >
               Back to Login
             </Link>

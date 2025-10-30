@@ -16,7 +16,7 @@ const HomePage: React.FC = () => {
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">T</span>
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-xl font-bold  bg-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Todu
               </span>
             </div>
@@ -25,7 +25,7 @@ const HomePage: React.FC = () => {
               {isAuthenticated ? (
                 <Link
                   to="/dashboard"
-                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200"
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200"
                 >
                   Go to Dashboard
                 </Link>
@@ -39,7 +39,7 @@ const HomePage: React.FC = () => {
                   </Link>
                   <Link
                     to="/signup"
-                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200"
+                    className="px-6 py-2  bg-blue-600 text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200"
                   >
                     Get Started
                   </Link>
@@ -55,7 +55,7 @@ const HomePage: React.FC = () => {
         <div className="text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
             Organize Your Life with{' '}
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className=" bg-blue-600 bg-clip-text text-transparent">
               Todu
             </span>
           </h1>
@@ -68,7 +68,7 @@ const HomePage: React.FC = () => {
               <>
                 <Link
                   to="/signup"
-                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium text-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1"
+                  className="px-8 py-3  bg-blue-600 text-white rounded-lg font-medium text-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1"
                 >
                   Start Free Today
                 </Link>
@@ -93,10 +93,10 @@ const HomePage: React.FC = () => {
                   <div className="w-4 h-4 rounded border-2 border-blue-600"></div>
                   <span className="font-medium text-gray-800 dark:text-gray-200">Team Meeting</span>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">Discuss Q4 objectives</p>
+                <p className="text-sm text-gray-600 dark:text-gray-500">Discuss Q4 objectives</p>
                 <div className="mt-2 flex items-center space-x-2">
                   <span className="text-xs bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">High</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Due: Today</span>
+                  <span className="text-xs text-gray-500  dark:text-gray-500">Due: Today</span>
                 </div>
               </div>
 
@@ -239,7 +239,7 @@ const HomePage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Step 1 */}
             <div className="relative text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
+              <div className="w-16 h-16  bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
                 1
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Create an Account</h3>
@@ -250,7 +250,7 @@ const HomePage: React.FC = () => {
 
             {/* Step 2 */}
             <div className="relative text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
+              <div className="w-16 h-16  bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
                 2
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Add Your Tasks</h3>
@@ -261,7 +261,7 @@ const HomePage: React.FC = () => {
 
             {/* Step 3 */}
             <div className="relative text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
+              <div className="w-16 h-16  bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
                 3
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Stay Productive</h3>
