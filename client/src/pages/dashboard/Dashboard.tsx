@@ -6,6 +6,7 @@ import { TaskModal } from '../../features/tasks/TaskModal';
 import { QuickAdd } from '../../features/tasks/QuickAdd';
 import { SearchBar } from '../../components/ui/SearchBar';
 import { FilterBar, type FilterOptions } from '../../components/ui/FilterBar';
+import { ActivityFeed } from '../../components/ActivityFeed/ActivityFeed';
 import { useAuthStore } from '../../store/authStore';
 import { Navigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -13,10 +14,6 @@ import { useDebounce } from '../../hooks/useDebounce';
 
 const Dashboard = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const user = useAuthStore((state) => state.user);
-  const token = useAuthStore((state) => state.token);
-  
-  console.log('[Dashboard] Render - isAuthenticated:', isAuthenticated, 'user:', user, 'token:', token ? 'present' : 'missing');
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<FilterOptions>({
@@ -29,11 +26,9 @@ const Dashboard = () => {
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   if (!isAuthenticated) {
-    console.log('[Dashboard] Not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
-  console.log('[Dashboard] Authenticated, rendering dashboard');
   return (
     <AppShell>
       <ListSidebar />
@@ -77,7 +72,20 @@ const Dashboard = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <TaskList searchQuery={debouncedSearch} filters={filters} />
+          {/* Use tablet (md) as the breakpoint for two-column layout so tablets show activity feed side-by-side */}
+          <div className="flex flex-col md:flex-row gap-4 p-4 h-full">
+            {/* Main Task List */}
+            <div className="flex-1 min-w-0">
+              <TaskList searchQuery={debouncedSearch} filters={filters} />
+            </div>
+
+            {/* Activity Feed Sidebar (hidden on mobile) */}
+            <div className="hidden md:block md:w-80 lg:w-96 flex-shrink-0">
+              <div className="sticky top-4">
+                <ActivityFeed />
+              </div>
+            </div>
+          </div>
         </div>
         <QuickAdd />
       </main>

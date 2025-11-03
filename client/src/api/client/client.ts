@@ -40,8 +40,9 @@ api.interceptors.response.use(
       if (!isAuthPage) {
         // Unauthorized on protected page - clear token and redirect to login
         localStorage.removeItem('authToken');
+        localStorage.removeItem('authUser');
         sessionStorage.removeItem('authToken');
-        localStorage.removeItem('user');
+        sessionStorage.removeItem('authUser');
         window.location.href = '/login';
       }
     }

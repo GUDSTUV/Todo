@@ -12,7 +12,7 @@ interface JwtPayload {
 export const protect = async (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): Promise<void> => {
   try {
     let token: string | undefined;
@@ -25,13 +25,7 @@ export const protect = async (
       token = req.headers.authorization.split(" ")[1];
     }
 
-    console.log("[auth middleware] Token present:", !!token);
-    if (token) {
-      console.log("[auth middleware] Token preview:", token.substring(0, 20) + "...");
-    }
-
     if (!token) {
-      console.log("[auth middleware] No token provided");
       res.status(401).json({
         success: false,
         error: "Not authorized to access this route",
@@ -41,16 +35,14 @@ export const protect = async (
 
     try {
       // Verify token
-      console.log('[auth middleware] Verifying token with JWT_SECRET...');
       const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-      console.log('[auth middleware] Token verified successfully. Decoded:', decoded);
 
       // Attach user info to request
-      (req as any).user = decoded;
+      req.user = decoded;
 
       next();
     } catch (jwtError) {
-      console.error('[auth middleware] JWT verification failed:', jwtError);
+      console.error("[auth middleware] JWT verification failed:", jwtError);
       res.status(401).json({
         success: false,
         error: "Invalid or expired token",

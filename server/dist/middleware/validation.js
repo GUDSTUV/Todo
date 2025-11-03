@@ -24,7 +24,7 @@ exports.validateTask = [
         .isLength({ min: 1, max: 500 })
         .withMessage("Title must be between 1 and 500 characters"),
     (0, express_validator_1.body)("description")
-        .optional()
+        .optional({ nullable: true })
         .trim()
         .isLength({ max: 5000 })
         .withMessage("Description cannot exceed 5000 characters"),
@@ -43,17 +43,35 @@ exports.validateTask = [
         .trim()
         .withMessage("Each tag must be a string"),
     (0, express_validator_1.body)("dueDate")
-        .optional()
-        .isISO8601()
-        .withMessage("Due date must be a valid ISO 8601 date"),
+        .optional({ nullable: true })
+        .custom((value) => {
+        if (value === null || value === undefined || value === "") {
+            return true; // Allow null/undefined/empty
+        }
+        // Check if it's a valid ISO 8601 date
+        return !isNaN(Date.parse(value));
+    })
+        .withMessage("Due date must be a valid date or null"),
     (0, express_validator_1.body)("reminderDate")
-        .optional()
-        .isISO8601()
-        .withMessage("Reminder date must be a valid ISO 8601 date"),
+        .optional({ nullable: true })
+        .custom((value) => {
+        if (value === null || value === undefined || value === "") {
+            return true; // Allow null/undefined/empty
+        }
+        // Check if it's a valid ISO 8601 date
+        return !isNaN(Date.parse(value));
+    })
+        .withMessage("Reminder date must be a valid date or null"),
     (0, express_validator_1.body)("listId")
-        .optional()
-        .isMongoId()
-        .withMessage("List ID must be a valid MongoDB ObjectId"),
+        .optional({ nullable: true })
+        .custom((value) => {
+        if (value === null || value === undefined || value === "") {
+            return true; // Allow null/undefined/empty string
+        }
+        // Check if it's a valid MongoDB ObjectId
+        return /^[a-f\d]{24}$/i.test(value);
+    })
+        .withMessage("List ID must be a valid MongoDB ObjectId or null"),
     (0, express_validator_1.body)("order")
         .optional()
         .isInt({ min: 0 })

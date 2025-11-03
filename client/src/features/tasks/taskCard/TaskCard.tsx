@@ -1,6 +1,8 @@
 import { format } from 'date-fns';
 import { useDeleteTask, useUpdateTask } from '../../../hooks/useTasks/useTasks';
 import { useUIStore } from '../../../store/uiStore';
+import { useLists } from '../../../hooks/useList/useLists';
+import { getInitials, getAvatarUrl } from '../../../utils/avatar';
 import type { Task } from '../../../api/tasks/tasks';
 
 interface TaskCardProps {
@@ -11,6 +13,11 @@ export const TaskCard = ({ task }: TaskCardProps) => {
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
   const openTaskModal = useUIStore((state) => state.openTaskModal);
+  const { data: listsData } = useLists();
+  
+  // Find the list this task belongs to
+  const taskList = listsData?.data?.find((list) => list._id === task.listId);
+  const collaborators = taskList?.sharedWith || [];
 
   const handleToggleComplete = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -48,9 +55,9 @@ export const TaskCard = ({ task }: TaskCardProps) => {
   return (
     <div
       className={`
-        group bg-white border rounded-lg p-4 hover:shadow-md transition-all cursor-pointer
+        group bg-white dark:bg-gray-800 border rounded-lg p-4 hover:shadow-md transition-all cursor-pointer
         ${task.status === 'done' ? 'opacity-60' : ''}
-        ${isOverdue ? 'border-red-300' : 'border-gray-200'}
+        ${isOverdue ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-700'}
       `}
       onClick={() => openTaskModal(task._id)}
       role="button"
@@ -69,7 +76,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
           className={`
             mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0
             transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500
-            ${task.status === 'done' ? 'bg-blue-600 border-blue-600' : 'border-gray-300 hover:border-blue-500'}
+            ${task.status === 'done' ? 'bg-blue-600 border-blue-600' : 'border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-500'}
           `}
           aria-label={task.status === 'done' ? 'Mark as incomplete' : 'Mark as complete'}
         >
@@ -82,12 +89,12 @@ export const TaskCard = ({ task }: TaskCardProps) => {
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <h3 className={`font-medium text-gray-900 ${task.status === 'done' ? 'line-through' : ''}`}>
+          <h3 className={`font-medium text-gray-900 dark:text-white ${task.status === 'done' ? 'line-through' : ''}`}>
             {task.title}
           </h3>
 
           {task.description && (
-            <p className="mt-1 text-sm text-gray-600 line-clamp-2">{task.description}</p>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{task.description}</p>
           )}
 
           {/* Metadata */}
@@ -99,23 +106,70 @@ export const TaskCard = ({ task }: TaskCardProps) => {
 
             {/* Due date */}
             {task.dueDate && (
-              <span className={`px-2 py-1 rounded-full ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
+              <span className={`px-2 py-1 rounded-full ${isOverdue ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}>
                 📅 {format(new Date(task.dueDate), 'MMM d, yyyy')}
               </span>
             )}
 
             {/* Tags */}
             {task.tags.map((tag) => (
-              <span key={tag} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+              <span key={tag} className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full">
                 #{tag}
               </span>
             ))}
 
             {/* Subtasks */}
             {task.subtasks && task.subtasks.length > 0 && (
-              <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full">
+              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
                 ✓ {task.subtasks.filter(st => st.done).length}/{task.subtasks.length}
               </span>
+            )}
+            
+            {/* Collaborators */}
+            {collaborators.length > 0 && (
+              <div className="flex -space-x-1">
+                {collaborators.slice(0, 3).map((collab) => {
+                  const initials = getInitials(collab.userId.name);
+                  const avatarUrl = getAvatarUrl(collab.userId.avatarUrl);
+                  
+                  return (
+                    <div
+                      key={collab.userId._id}
+                      className="w-6 h-6 rounded-full ring-2 ring-white dark:ring-gray-800 overflow-hidden flex-shrink-0"
+                      title={`${collab.userId.name} (${collab.role})`}
+                    >
+                      {avatarUrl ? (
+                        <img
+                          src={avatarUrl}
+                          alt={collab.userId.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                            const fallback = e.currentTarget.nextElementSibling;
+                            if (fallback) (fallback as HTMLElement).style.display = "flex";
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className="w-full h-full flex items-center justify-center text-white text-xs font-semibold bg-blue-600"
+                        style={{
+                          display: avatarUrl ? "none" : "flex",
+                        }}
+                      >
+                        {initials}
+                      </div>
+                    </div>
+                  );
+                })}
+                {collaborators.length > 3 && (
+                  <div
+                    className="w-6 h-6 rounded-full bg-gray-400 dark:bg-gray-600 flex items-center justify-center text-white text-xs font-semibold ring-2 ring-white dark:ring-gray-800"
+                    title={`+${collaborators.length - 3} more`}
+                  >
+                    +{collaborators.length - 3}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -124,7 +178,7 @@ export const TaskCard = ({ task }: TaskCardProps) => {
         <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={handleDelete}
-            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+            className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-500 transition-colors"
             aria-label="Delete task"
           >
             <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">

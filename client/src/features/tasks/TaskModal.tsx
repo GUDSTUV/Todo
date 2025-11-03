@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/button/Button';
 import { Checkbox } from '../../components/ui/checkbox/Checkbox';
 import { Badge } from '../../components/ui/badge/Badge';
 import { Spinner } from '../../components/ui/spinner/Spinner';
+import { CommentsSection } from './CommentsSection';
 import type { UpdateTaskData } from '../../api/tasks/tasks';
 
 export const TaskModal = () => {
@@ -36,6 +37,7 @@ export const TaskModal = () => {
         tags: task.tags,
         subtasks: task.subtasks,
         dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : '',
+        reminderDate: task.reminderDate ? new Date(task.reminderDate).toISOString().slice(0, 16) : '',
       });
     }
   }, [task]);
@@ -52,6 +54,7 @@ export const TaskModal = () => {
     if (JSON.stringify(formData.subtasks) !== JSON.stringify(task?.subtasks))
       updates.subtasks = formData.subtasks;
     if (formData.dueDate !== task?.dueDate) updates.dueDate = formData.dueDate;
+    if (formData.reminderDate !== task?.reminderDate) updates.reminderDate = formData.reminderDate;
 
     if (Object.keys(updates).length > 0) {
       updateTask({ id: selectedTaskId, data: updates });
@@ -136,7 +139,7 @@ export const TaskModal = () => {
             placeholder="Add a description..."
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label="Status"
               value={formData.status || 'todo'}
@@ -167,17 +170,28 @@ export const TaskModal = () => {
             />
           </div>
 
-          <Input
-            label="Due Date"
-            type="datetime-local"
-            value={formData.dueDate || ''}
-            onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-            onBlur={handleUpdate}
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Due Date"
+              type="datetime-local"
+              value={formData.dueDate || ''}
+              onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+              onBlur={handleUpdate}
+            />
+            <Input
+              label="Reminder Date"
+              type="datetime-local"
+              value={formData.reminderDate || ''}
+              onChange={(e) => setFormData({ ...formData, reminderDate: e.target.value })}
+              onBlur={handleUpdate}
+              className={formData.dueDate && formData.reminderDate && new Date(formData.reminderDate) > new Date(formData.dueDate) ? 'border-red-500' : ''}
+              helperText={formData.dueDate && formData.reminderDate && new Date(formData.reminderDate) > new Date(formData.dueDate) ? 'Reminder should be before due date' : ''}
+            />
+          </div>
 
           {/* Tags */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tags</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {formData.tags?.map((tag) => (
                 <Badge key={tag} variant="primary">
@@ -187,7 +201,7 @@ export const TaskModal = () => {
                       handleRemoveTag(tag);
                       setTimeout(handleUpdate, 100);
                     }}
-                    className="ml-1 text-blue-600 hover:text-blue-800"
+                    className="ml-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                     aria-label={`Remove tag ${tag}`}
                   >
                     ×
@@ -207,6 +221,7 @@ export const TaskModal = () => {
                     setTimeout(handleUpdate, 100);
                   }
                 }}
+                className="flex-1"
               />
               <Button
                 type="button"
@@ -215,6 +230,7 @@ export const TaskModal = () => {
                   setTimeout(handleUpdate, 100);
                 }}
                 variant="secondary"
+                className="whitespace-nowrap"
               >
                 Add
               </Button>
@@ -223,7 +239,7 @@ export const TaskModal = () => {
 
           {/* Subtasks */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Subtasks</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subtasks</label>
             <div className="space-y-2 mb-2">
               {formData.subtasks?.map((subtask, index) => (
                 <div key={index} className="flex items-center gap-2">
@@ -234,7 +250,7 @@ export const TaskModal = () => {
                       setTimeout(handleUpdate, 100);
                     }}
                   />
-                  <span className={`flex-1 ${subtask.done ? 'line-through text-gray-500' : ''}`}>
+                  <span className={`flex-1 ${subtask.done ? 'line-through text-gray-500 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
                     {subtask.title}
                   </span>
                   <button
@@ -242,7 +258,7 @@ export const TaskModal = () => {
                       handleRemoveSubtask(index);
                       setTimeout(handleUpdate, 100);
                     }}
-                    className="text-gray-400 hover:text-red-600"
+                    className="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-500"
                     aria-label={`Remove subtask ${subtask.title}`}
                   >
                     ×
@@ -262,6 +278,7 @@ export const TaskModal = () => {
                     setTimeout(handleUpdate, 100);
                   }
                 }}
+                className="flex-1"
               />
               <Button
                 type="button"
@@ -270,23 +287,31 @@ export const TaskModal = () => {
                   setTimeout(handleUpdate, 100);
                 }}
                 variant="secondary"
+                className="whitespace-nowrap"
               >
                 Add
               </Button>
             </div>
           </div>
 
+          {/* Comments Section */}
+          {selectedTaskId && (
+            <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+              <CommentsSection taskId={selectedTaskId} />
+            </div>
+          )}
+
           {/* Actions */}
-          <div className="flex justify-between pt-4 border-t">
-            <Button variant="danger" onClick={handleDelete} isLoading={isDeleting}>
+          <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <Button variant="danger" onClick={handleDelete} isLoading={isDeleting} fullWidth className="sm:w-auto">
               Delete Task
             </Button>
-            <Button onClick={closeTaskModal}>Close</Button>
+            <Button onClick={closeTaskModal} fullWidth className="sm:w-auto">Close</Button>
           </div>
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-gray-500">Task not found</p>
+          <p className="text-gray-500 dark:text-gray-400">Task not found</p>
         </div>
       )}
     </Modal>

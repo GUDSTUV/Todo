@@ -1,22 +1,14 @@
 import type { AppShellProps } from './AppShell.type';
-import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
-import { useNavigate } from 'react-router-dom';
 import { ThemeToggleDropdown } from '../ui/ThemeToggle';
+import NotificationCenter from '../ui/NotificationCenter';
+import { ProfileDropdown } from '../ui/ProfileDropdown';
 
 
 
 export const AppShell = ({ children }: AppShellProps) => {
-  const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
   const isSidebarOpen = useUIStore((state) => state.isSidebarOpen);
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   return (
     <div className="h-screen flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -44,16 +36,11 @@ export const AppShell = ({ children }: AppShellProps) => {
         </div>
 
         <div className="flex items-center gap-3">
-          <ThemeToggleDropdown />
-          <span className="text-sm text-gray-600 dark:text-gray-300 hidden sm:inline">
-            Welcome, {user?.name || 'User'}
-          </span>
-          <button
-            onClick={handleLogout}
-            className="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            Logout
-          </button>
+          <NotificationCenter />
+          <ThemeToggleDropdown className="hidden md:block" />
+          
+          {/* Profile Dropdown - Now visible on all screen sizes */}
+          <ProfileDropdown />
         </div>
       </header>
 

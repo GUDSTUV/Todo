@@ -1,19 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
 
 @import "tailwindcss";
+
+/* Configure Tailwind theme - Poppins as default font */
+@theme {
+  --font-family: "Poppins", sans-serif;
+  --font-sans: "Poppins", sans-serif;
+}
 
 /* Force dark variant to use the `.dark` class on any ancestor (Tailwind v4) */
 @custom-variant dark (&:where(.dark *));
 
-html.dark { color-scheme: dark; }
+html.dark {
+  color-scheme: dark;
+}
 
-body{
-    padding:0;
-    margin:0;
-    font-family: 'Poppins', sans-serif;
-    color: rgb(17 24 39); /* gray-900 */
+body {
+  padding: 0;
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  color: rgb(17 24 39); /* gray-900 */
 }
 
 .dark body {
-    color: rgb(243 244 246); /* gray-100 */
+  color: rgb(243 244 246); /* gray-100 */
+}
+
+/* Mention styling */
+.mention {
+  color: rgb(59 130 246); /* blue-500 */
+  background-color: rgb(219 234 254); /* blue-100 */
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
+
+.dark .mention {
+  color: rgb(147 197 253); /* blue-300 */
+  background-color: rgb(30 58 138); /* blue-900/30 */
 }

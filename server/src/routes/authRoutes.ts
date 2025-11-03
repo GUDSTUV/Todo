@@ -6,12 +6,17 @@ import {
   me,
   forgotPassword,
   resetPassword,
+  changePassword,
+  updateProfile,
+  uploadAvatar,
+  deleteAccount,
 } from "../controllers/authController";
 import { validateSignup, validateLogin } from "../middleware/validation";
 import passport from "passport";
 import jwt from "jsonwebtoken";
 import { protect } from "../middleware/auth";
 import { JWT_SECRET } from "../config/jwt";
+import { upload } from "../middleware/upload";
 
 const router = express.Router();
 
@@ -37,11 +42,6 @@ router.get(
   passport.authenticate("google", { failureRedirect: "/" }),
   (req, res) => {
     const user = req.user as any;
-    console.log("[OAuth callback] Creating JWT for user:", user.email);
-    console.log(
-      "[OAuth callback] Using JWT_SECRET:",
-      JWT_SECRET.substring(0, 10) + "..."
-    );
 
     const token = jwt.sign(
       { userId: user._id, email: user.email },
@@ -50,15 +50,7 @@ router.get(
         expiresIn: "7d",
       }
     );
-    console.log(
-      "[OAuth callback] Token created, preview:",
-      token.substring(0, 30) + "..."
-    );
     const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-    console.log(
-      "[OAuth callback] Redirecting to:",
-      `${clientUrl}/dashboard?token=...`
-    );
     res.redirect(`${clientUrl}/dashboard?token=${token}`);
   }
 );
@@ -68,6 +60,18 @@ router.post("/google/verify", googleOneTap);
 
 // Get current authenticated user
 router.get("/me", protect, me);
+
+// Change password (while logged in)
+router.put("/change-password", protect, changePassword);
+
+// Update profile
+router.patch("/profile", protect, updateProfile);
+
+// Upload avatar
+router.post("/avatar", protect, upload.single("avatar"), uploadAvatar);
+
+// Delete account
+router.delete("/account", protect, deleteAccount);
 
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);

@@ -1,11 +1,6 @@
 import React from 'react';
 import { Button } from '../button/Button';
-
-interface GoogleAuthButtonProps {
-  onClick: () => void;
-  text?: string;
-  isLoading?: boolean;
-}
+import type { GoogleAuthButtonProps } from './GoogleAuthButton.type';
 
 const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ 
   onClick, 

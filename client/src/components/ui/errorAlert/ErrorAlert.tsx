@@ -1,17 +1,13 @@
 import React from 'react';
-
-interface ErrorAlertProps {
-  message: string;
-  onDismiss?: () => void;
-}
+import type { ErrorAlertProps } from './ErrorAlert.type';
 
 const ErrorAlert: React.FC<ErrorAlertProps> = ({ message, onDismiss }) => {
   if (!message) return null;
 
   return (
-    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm flex items-start gap-2">
+    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-3 sm:px-4 py-3 rounded-lg text-xs sm:text-sm flex items-start gap-2">
       <svg 
-        className="w-5 h-5 flex-shrink-0 mt-0.5" 
+        className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5" 
         fill="currentColor" 
         viewBox="0 0 20 20"
       >
@@ -21,7 +17,7 @@ const ErrorAlert: React.FC<ErrorAlertProps> = ({ message, onDismiss }) => {
           clipRule="evenodd" 
         />
       </svg>
-      <div className="flex-1">{message}</div>
+      <div className="flex-1 break-words">{message}</div>
       {onDismiss && (
         <button
           onClick={onDismiss}

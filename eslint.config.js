@@ -14,7 +14,7 @@ export default [
     languageOptions: { parser: tsParser },
     plugins: { "@typescript-eslint": ts, react, prettier },
     rules: {
-      "prettier/prettier": "error",
+      "prettier/prettier": ["error", { endOfLine: "auto" }],
       "react/react-in-jsx-scope": "off",
       "no-undef": "off",
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],

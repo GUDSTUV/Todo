@@ -8,6 +8,9 @@ import {
   archiveList,
   bulkUpdateLists,
   refreshListTaskCount,
+  shareList,
+  removeCollaborator,
+  leaveSharedList,
 } from "../controllers/listController";
 import { protect } from "../middleware/auth";
 import { validateList } from "../middleware/validation";
@@ -32,5 +35,10 @@ router
 // Additional operations
 router.patch("/:id/archive", archiveList);
 router.post("/:id/refresh-count", refreshListTaskCount);
+
+// Collaboration operations
+router.post("/:id/share", shareList);
+router.delete("/:id/collaborators/:collaboratorId", removeCollaborator);
+router.post("/:id/leave", leaveSharedList);
 
 export default router;

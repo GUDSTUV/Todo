@@ -1,11 +1,5 @@
 import React from 'react';
-
-interface SearchBarProps {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  className?: string;
-}
+import type { SearchBarProps } from './SearchBar.type';
 
 export const SearchBar: React.FC<SearchBarProps> = ({
   value,

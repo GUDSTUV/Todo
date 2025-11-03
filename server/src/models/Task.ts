@@ -48,7 +48,7 @@ const subtaskSchema = new Schema<ISubtask>(
       default: false,
     },
   },
-  { _id: true },
+  { _id: true }
 );
 
 const taskSchema = new Schema<ITask>(
@@ -139,7 +139,7 @@ const taskSchema = new Schema<ITask>(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 // Compound indexes for common queries

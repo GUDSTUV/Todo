@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ApiResponse, ApiErrorResponse } from './useLists.type';
 import toast from 'react-hot-toast';
-import { archiveList, bulkUpdateLists, createList, deleteList, getList, getLists, updateList, type CreateListData, type UpdateListData, type List } from '../../api/lists/lists';
+import { archiveList, bulkUpdateLists, createList, deleteList, getList, getLists, updateList, leaveSharedList, type CreateListData, type UpdateListData, type List } from '../../api/lists/lists';
 
 // Query keys
 export const listKeys = {
@@ -125,6 +125,24 @@ export const useBulkUpdateLists = () => {
     },
     onError: (error: ApiErrorResponse) => {
       toast.error(error.response?.data?.error || 'Failed to update lists');
+    },
+  });
+};
+
+// Leave shared list mutation (for collaborators)
+export const useLeaveSharedList = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => leaveSharedList(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: listKeys.all });
+      // Also refresh tasks since shared list visibility changes
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast.success('You left the list');
+    },
+    onError: (error: ApiErrorResponse) => {
+      toast.error(error.response?.data?.error || 'Failed to leave list');
     },
   });
 };

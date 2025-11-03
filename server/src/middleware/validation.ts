@@ -5,7 +5,7 @@ import { body, validationResult } from "express-validator";
 export const checkValidation = (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -27,7 +27,7 @@ export const validateTask = [
     .isLength({ min: 1, max: 500 })
     .withMessage("Title must be between 1 and 500 characters"),
   body("description")
-    .optional()
+    .optional({ nullable: true })
     .trim()
     .isLength({ max: 5000 })
     .withMessage("Description cannot exceed 5000 characters"),
@@ -46,17 +46,35 @@ export const validateTask = [
     .trim()
     .withMessage("Each tag must be a string"),
   body("dueDate")
-    .optional()
-    .isISO8601()
-    .withMessage("Due date must be a valid ISO 8601 date"),
+    .optional({ nullable: true })
+    .custom((value) => {
+      if (value === null || value === undefined || value === "") {
+        return true; // Allow null/undefined/empty
+      }
+      // Check if it's a valid ISO 8601 date
+      return !isNaN(Date.parse(value));
+    })
+    .withMessage("Due date must be a valid date or null"),
   body("reminderDate")
-    .optional()
-    .isISO8601()
-    .withMessage("Reminder date must be a valid ISO 8601 date"),
+    .optional({ nullable: true })
+    .custom((value) => {
+      if (value === null || value === undefined || value === "") {
+        return true; // Allow null/undefined/empty
+      }
+      // Check if it's a valid ISO 8601 date
+      return !isNaN(Date.parse(value));
+    })
+    .withMessage("Reminder date must be a valid date or null"),
   body("listId")
-    .optional()
-    .isMongoId()
-    .withMessage("List ID must be a valid MongoDB ObjectId"),
+    .optional({ nullable: true })
+    .custom((value) => {
+      if (value === null || value === undefined || value === "") {
+        return true; // Allow null/undefined/empty string
+      }
+      // Check if it's a valid MongoDB ObjectId
+      return /^[a-f\d]{24}$/i.test(value);
+    })
+    .withMessage("List ID must be a valid MongoDB ObjectId or null"),
   body("order")
     .optional()
     .isInt({ min: 0 })
@@ -129,7 +147,7 @@ export const validateSignup = [
     .withMessage("Password must be at least 6 characters long")
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage(
-      "Password must contain at least one lowercase letter, one uppercase letter, and one number",
+      "Password must contain at least one lowercase letter, one uppercase letter, and one number"
     ),
   checkValidation,
 ];

@@ -4,7 +4,7 @@ import api from "../client/client";
 
 export interface List {
   _id: string;
-  userId: string;
+  userId: string | { _id: string; name: string; email: string; avatarUrl?: string };
   name: string;
   description?: string;
   color: string;
@@ -15,6 +15,11 @@ export interface List {
   taskCount: number;
   syncVersion: number;
   lastModified: string;
+  sharedWith: Array<{
+    userId: { _id: string; name: string; email: string; avatarUrl?: string };
+    role: "viewer" | "editor";
+    invitedAt: string;
+  }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -92,6 +97,31 @@ export const bulkUpdateLists = async (
 export const refreshListTaskCount = async (id: string) => {
   const response = await api.post<{ success: boolean; data: List }>(
     `/lists/${id}/refresh-count`
+  );
+  return response.data;
+};
+
+// Share a list with another user
+export const shareList = async (id: string, email: string, role: "viewer" | "editor" = "viewer") => {
+  const response = await api.post<{ success: boolean; message: string; data: List }>(
+    `/lists/${id}/share`,
+    { email, role }
+  );
+  return response.data;
+};
+
+// Remove a collaborator from a list
+export const removeCollaborator = async (id: string, collaboratorId: string) => {
+  const response = await api.delete<{ success: boolean; message: string; data: List }>(
+    `/lists/${id}/collaborators/${collaboratorId}`
+  );
+  return response.data;
+};
+
+// Leave a shared list
+export const leaveSharedList = async (id: string) => {
+  const response = await api.post<{ success: boolean; message: string }>(
+    `/lists/${id}/leave`
   );
   return response.data;
 };

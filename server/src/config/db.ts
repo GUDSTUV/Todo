@@ -49,29 +49,29 @@ export const connectDB = async (): Promise<void> => {
     ) {
       console.error("[MongoDB] Authentication failed. Please verify:");
       console.error(
-        "- Database user exists in Atlas and has correct role (Read/Write).",
+        "- Database user exists in Atlas and has correct role (Read/Write)."
       );
       console.error("- Username and PASSWORD in your MONGODB_URI are correct.");
       console.error(
-        "- If your password contains special characters (@:/?&=#), URL-encode it.",
+        "- If your password contains special characters (@:/?&=#), URL-encode it."
       );
       console.error(
-        "- The cluster host in your URI matches Atlas (e.g., cluster0.xxxxxx.mongodb.net).",
+        "- The cluster host in your URI matches Atlas (e.g., cluster0.xxxxxx.mongodb.net)."
       );
     }
 
     // Network/IP access list issues
     if (
       /IP address|not in whitelist|timed out|ECONNREFUSED|ENOTFOUND|DNS/i.test(
-        errmsg || "",
+        errmsg || ""
       )
     ) {
       console.error("[MongoDB] Network or IP access issue. Please check:");
       console.error(
-        "- Atlas Network Access: add your current IP or use 0.0.0.0/0 for testing.",
+        "- Atlas Network Access: add your current IP or use 0.0.0.0/0 for testing."
       );
       console.error(
-        "- Local network allows outbound connections to MongoDB Atlas.",
+        "- Local network allows outbound connections to MongoDB Atlas."
       );
       console.error("- DNS resolves your cluster host.");
     }

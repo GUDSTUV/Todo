@@ -32,8 +32,12 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const crypto_1 = __importDefault(require("crypto"));
 const userSchema = new mongoose_1.Schema({
     googleId: {
         type: String,
@@ -63,6 +67,12 @@ const userSchema = new mongoose_1.Schema({
     avatarUrl: {
         type: String,
     },
+    resetPasswordToken: {
+        type: String,
+    },
+    resetPasswordExpire: {
+        type: Date,
+    },
     preferences: {
         theme: {
             type: String,
@@ -81,6 +91,19 @@ const userSchema = new mongoose_1.Schema({
 }, {
     timestamps: true,
 });
+// Generate and hash password reset token
+userSchema.methods.getResetPasswordToken = function () {
+    // Generate token
+    const resetToken = crypto_1.default.randomBytes(32).toString("hex");
+    // Hash token and set to resetPasswordToken field
+    this.resetPasswordToken = crypto_1.default
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+    // Set expire to 10 minutes
+    this.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000);
+    return resetToken;
+};
 // Index for fast email lookups
 userSchema.index({ email: 1 });
 const User = mongoose_1.default.model("User", userSchema);

@@ -60,8 +60,8 @@ export const TaskList = ({ searchQuery: propSearchQuery, filters: propFilters }:
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <p className="text-red-600 font-medium">Failed to load tasks</p>
-          <p className="text-sm text-gray-500 mt-1">Please try again later</p>
+          <p className="text-red-600 dark:text-red-400 font-medium">Failed to load tasks</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Please try again later</p>
         </div>
       </div>
     );
@@ -74,7 +74,7 @@ export const TaskList = ({ searchQuery: propSearchQuery, filters: propFilters }:
       <div className="flex items-center justify-center h-64">
         <div className="text-center max-w-sm">
           <svg
-            className="mx-auto h-12 w-12 text-gray-400"
+            className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -87,8 +87,8 @@ export const TaskList = ({ searchQuery: propSearchQuery, filters: propFilters }:
               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
             />
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No tasks yet</h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No tasks yet</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Get started by creating a new task with Quick Add below.
           </p>
         </div>

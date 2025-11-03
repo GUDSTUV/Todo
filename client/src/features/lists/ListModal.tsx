@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useList, useCreateList, useUpdateList, useDeleteList } from '../../hooks/useList/useLists';
+import { useList, useCreateList, useUpdateList, useDeleteList, useLeaveSharedList } from '../../hooks/useList/useLists';
 import { useUIStore } from '../../store/uiStore';
+import { useAuthStore } from '../../store/authStore';
 import { Modal } from '../../components/ui/modal/Modal';
 import { Input } from '../../components/ui/Input/Input';
 import { Textarea } from '../../components/ui/textarea/Textarea';
@@ -23,14 +24,23 @@ export const ListModal = () => {
   const isOpen = useUIStore((state) => state.isListModalOpen);
   const selectedListForEdit = useUIStore((state) => state.selectedListForEdit);
   const closeListModal = useUIStore((state) => state.closeListModal);
+  const currentUser = useAuthStore((state) => state.user);
 
   const { data: listData } = useList(selectedListForEdit || '');
   const { mutate: createList, isPending: isCreating } = useCreateList();
   const { mutate: updateList, isPending: isUpdating } = useUpdateList();
   const { mutate: deleteList, isPending: isDeleting } = useDeleteList();
+  const { mutate: leaveList, isPending: isLeaving } = useLeaveSharedList();
 
   const list = listData?.data;
   const isEditMode = !!selectedListForEdit;
+  
+  // Check if current user is the owner of the list
+  const isOwner = list && currentUser && (
+    typeof list.userId === 'string' 
+      ? list.userId === currentUser._id || list.userId === currentUser.id
+      : list.userId._id === currentUser._id || list.userId._id === currentUser.id
+  );
 
   const [formData, setFormData] = useState<CreateListData>({
     name: '',
@@ -117,6 +127,30 @@ export const ListModal = () => {
       title={isEditMode ? 'Edit List' : 'Create New List'}
       size="md"
     >
+      {isEditMode && !isOwner ? (
+        <div className="py-6">
+          <div className="text-center mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-2">
+              You don't have permission to edit this list.
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-500">
+              Only the list owner can modify list settings.
+            </p>
+          </div>
+          <div className="flex justify-center gap-3">
+            <Button onClick={handleClose} variant="secondary">
+              Close
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => selectedListForEdit && leaveList(selectedListForEdit)}
+              isLoading={isLeaving}
+            >
+              Leave This List
+            </Button>
+          </div>
+        </div>
+      ) : (
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="List Name"
@@ -155,16 +189,24 @@ export const ListModal = () => {
         </div>
 
         <div className="flex justify-between pt-4 border-t">
-          {isEditMode ? (
-            <Button
-              type="button"
-              variant="danger"
-              onClick={handleDelete}
-              isLoading={isDeleting}
-              disabled={list?.isDefault}
-            >
-              Delete List
-            </Button>
+          {isEditMode && isOwner ? (
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="danger"
+                onClick={handleDelete}
+                isLoading={isDeleting}
+                disabled={!!list?.isDefault}
+                title={list?.isDefault ? 'Default list cannot be deleted' : 'Delete this list'}
+              >
+                Delete List
+              </Button>
+              {list?.isDefault && (
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Default list cannot be deleted
+                </span>
+              )}
+            </div>
           ) : (
             <div />
           )}
@@ -178,6 +220,7 @@ export const ListModal = () => {
           </div>
         </div>
       </form>
+      )}
     </Modal>
   );
 };

@@ -1,7 +1,8 @@
 import React from 'react';
 import { useThemeStore } from '../../store/themeStore';
+import type { ThemeToggleProps, ThemeToggleDropdownProps } from './ThemeToggle.type';
 
-export const ThemeToggle: React.FC = () => {
+export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '' }) => {
   const { theme, setTheme } = useThemeStore();
 
   const toggleTheme = () => {
@@ -17,7 +18,7 @@ export const ThemeToggle: React.FC = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${className}`}
       aria-label="Toggle theme"
       title={`Current: ${theme}`}
     >
@@ -70,7 +71,7 @@ export const ThemeToggle: React.FC = () => {
   );
 };
 
-export const ThemeToggleDropdown: React.FC = () => {
+export const ThemeToggleDropdown: React.FC<ThemeToggleDropdownProps> = ({ className = '' }) => {
   const { theme, setTheme } = useThemeStore();
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -81,7 +82,7 @@ export const ThemeToggleDropdown: React.FC = () => {
   ];
 
   return (
-    <div className="relative">
+    <div className={`relative ${className}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center space-x-2"
@@ -108,7 +109,7 @@ export const ThemeToggleDropdown: React.FC = () => {
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20 overflow-hidden">
+          <div className="absolute mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20 overflow-hidden max-w-[calc(100vw-1rem)] left-2 right-2 sm:left-auto sm:right-0 w-auto sm:w-40">
             {options.map((option) => (
               <button
                 key={option.value}

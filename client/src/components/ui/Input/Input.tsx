@@ -35,6 +35,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
               disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed
               transition-all peer bg-white dark:bg-gray-800
+              text-gray-900 dark:text-gray-100
               ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
               ${isPasswordType && showPasswordToggle ? 'pr-16' : ''}
               ${className}

@@ -68,10 +68,12 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
   // Send email
   try {
     const info = await transporter.sendMail(mailOptions);
-    // If using Ethereal (for dev), output preview URL
-    const preview = (nodemailer as any).getTestMessageUrl?.(info);
-    if (preview) {
-      console.log("[sendEmail] Preview URL:", preview);
+    // If using Ethereal (for dev), output preview URL in development only
+    if (process.env.NODE_ENV === "development") {
+      const preview = (nodemailer as any).getTestMessageUrl?.(info);
+      if (preview) {
+        console.log("[sendEmail] Preview URL:", preview);
+      }
     }
   } catch (err) {
     console.error(

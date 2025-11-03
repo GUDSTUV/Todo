@@ -9,6 +9,10 @@ import LoginPage from "./pages/auth/login/LoginPage"
 import SignupPage from "./pages/auth/register/SignupPage"
 import ForgotPasswordPage from "./pages/auth/forgotPassword/ForgotPasswordPage"
 import ResetPasswordPage from "./pages/auth/resetPassword/ResetPasswordPage"
+import SettingsPage from "./pages/settings/SettingsPage"
+import MessagesPage from "./pages/messages/MessagesPage"
+import InvitePage from "./pages/invite/InvitePage"
+import { DebugPage } from "./pages/debug/DebugPage"
 import { useAuthStore } from "./store/authStore"
 import api from "./api/client/client"
 
@@ -33,7 +37,11 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password/:resetToken" element={<ResetPasswordPage />} />
+          <Route path="/invite/:token" element={<InvitePage />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/messages" element={<MessagesPage />} />
+          <Route path="/debug" element={<DebugPage />} />
         </Routes>
       </BrowserRouter>
     </Providers>

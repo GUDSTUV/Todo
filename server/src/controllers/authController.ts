@@ -2,9 +2,11 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt, { SignOptions } from "jsonwebtoken";
 import User from "../models/User";
+import List from "../models/List";
 import { OAuth2Client } from "google-auth-library";
 import { sendPasswordResetEmail } from "../utils/sendEmail";
 import crypto from "crypto";
+import { deleteOldAvatar } from "../middleware/upload";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-this-in-production";
@@ -46,6 +48,37 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
       email: email.toLowerCase(),
       passwordHash,
     });
+
+    // Create default lists for new user
+    await List.create([
+      {
+        userId: user._id,
+        name: "Inbox",
+        description: "Default inbox for all unorganized tasks",
+        isDefault: true,
+        icon: "inbox",
+        color: "#3B82F6",
+        order: 0,
+      },
+      {
+        userId: user._id,
+        name: "Today",
+        description: "Tasks to complete today",
+        isDefault: true,
+        icon: "calendar",
+        color: "#10B981",
+        order: 1,
+      },
+      {
+        userId: user._id,
+        name: "Upcoming",
+        description: "Tasks scheduled for the future",
+        isDefault: true,
+        icon: "clock",
+        color: "#F59E0B",
+        order: 2,
+      },
+    ]);
 
     // Generate JWT
     const token = jwt.sign(
@@ -166,12 +199,48 @@ export const googleOneTap = async (
 
     // Try to find by googleId or existing account by email
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
+    let isNewUser = false;
+
     if (!user) {
       user = await User.create({ googleId, email, name, avatarUrl });
+      isNewUser = true;
     } else if (!user.googleId) {
       user.googleId = googleId;
       if (!user.avatarUrl && avatarUrl) user.avatarUrl = avatarUrl;
       await user.save();
+    }
+
+    // Create default lists for new Google OAuth users
+    if (isNewUser) {
+      await List.create([
+        {
+          userId: user._id,
+          name: "Inbox",
+          description: "Default inbox for all unorganized tasks",
+          isDefault: true,
+          icon: "inbox",
+          color: "#3B82F6",
+          order: 0,
+        },
+        {
+          userId: user._id,
+          name: "Today",
+          description: "Tasks to complete today",
+          isDefault: true,
+          icon: "calendar",
+          color: "#10B981",
+          order: 1,
+        },
+        {
+          userId: user._id,
+          name: "Upcoming",
+          description: "Tasks scheduled for the future",
+          isDefault: true,
+          icon: "clock",
+          color: "#F59E0B",
+          order: 2,
+        },
+      ]);
     }
 
     const token = jwt.sign(
@@ -372,6 +441,256 @@ export const resetPassword = async (
     console.error("Reset password error:", error);
     res.status(500).json({
       error: "Failed to reset password. Please try again.",
+    });
+  }
+};
+
+// @desc    Change password (while logged in)
+// @route   PUT /api/auth/change-password
+// @access  Private
+export const changePassword = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = (req as any).user.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({
+        error: "Please provide both current and new password",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      res.status(400).json({
+        error: "New password must be at least 6 characters long",
+      });
+      return;
+    }
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    // Check if user has a password (not OAuth-only account)
+    if (!user.passwordHash) {
+      res.status(400).json({
+        error: "Cannot change password for OAuth-only accounts",
+      });
+      return;
+    }
+
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.passwordHash
+    );
+    if (!isPasswordValid) {
+      res.status(401).json({ error: "Current password is incorrect" });
+      return;
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.status(200).json({
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error("Change password error:", error);
+    res.status(500).json({
+      error: "Failed to change password. Please try again.",
+    });
+  }
+};
+
+// @desc    Update user profile
+// @route   PATCH /api/auth/profile
+// @access  Private
+export const updateProfile = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = (req as any).user.userId;
+    const { name, email, preferences, avatarUrl } = req.body;
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    // Update fields if provided
+    if (name) user.name = name;
+
+    // Update avatar URL (for URL-based avatars)
+    if (avatarUrl !== undefined) {
+      // If user has an uploaded avatar, delete it before setting URL
+      if (user.avatarUrl && !user.avatarUrl.startsWith("http")) {
+        deleteOldAvatar(user.avatarUrl);
+      }
+      user.avatarUrl = avatarUrl || undefined; // Allow removal by sending empty string
+    }
+
+    // Check if email is being changed and if it's already taken
+    if (email && email.toLowerCase() !== user.email) {
+      const existingUser = await User.findOne({ email: email.toLowerCase() });
+      if (existingUser) {
+        res.status(409).json({ error: "Email already in use" });
+        return;
+      }
+      user.email = email.toLowerCase();
+    }
+
+    // Update preferences
+    if (preferences) {
+      if (preferences.theme) user.preferences.theme = preferences.theme;
+      if (preferences.timezone)
+        user.preferences.timezone = preferences.timezone;
+      if (preferences.language)
+        user.preferences.language = preferences.language;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+        preferences: user.preferences,
+      },
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    res.status(500).json({
+      error: "Failed to update profile. Please try again.",
+    });
+  }
+};
+
+// @desc    Upload avatar image
+// @route   POST /api/auth/avatar
+// @access  Private
+export const uploadAvatar = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = (req as any).user.userId;
+
+    // Check if file was uploaded
+    if (!req.file) {
+      res.status(400).json({ error: "Please upload an image file" });
+      return;
+    }
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    // Delete old avatar if it's an uploaded file (not a URL)
+    if (user.avatarUrl && !user.avatarUrl.startsWith("http")) {
+      deleteOldAvatar(user.avatarUrl);
+    }
+
+    // Save new avatar path
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    user.avatarUrl = avatarUrl;
+    await user.save();
+
+    res.status(200).json({
+      message: "Avatar uploaded successfully",
+      avatarUrl,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+      },
+    });
+  } catch (error) {
+    console.error("Upload avatar error:", error);
+    res.status(500).json({
+      error: "Failed to upload avatar. Please try again.",
+    });
+  }
+};
+
+// @desc    Delete user account
+// @route   DELETE /api/auth/account
+// @access  Private
+export const deleteAccount = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = (req as any).user.userId;
+    const { password, confirmDelete } = req.body;
+
+    // Require explicit confirmation
+    if (confirmDelete !== "DELETE MY ACCOUNT") {
+      res.status(400).json({
+        error: 'Please type "DELETE MY ACCOUNT" to confirm',
+      });
+      return;
+    }
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    // Verify password for accounts with passwords
+    if (user.passwordHash) {
+      if (!password) {
+        res.status(400).json({
+          error: "Please provide your password to confirm account deletion",
+        });
+        return;
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+      if (!isPasswordValid) {
+        res.status(401).json({ error: "Incorrect password" });
+        return;
+      }
+    }
+
+    // Import Task model here to avoid circular dependency
+    const Task = (await import("../models/Task")).default;
+
+    // Delete all user's tasks and lists (cascade delete)
+    await Task.deleteMany({ userId });
+    await List.deleteMany({ userId });
+
+    // Delete user
+    await user.deleteOne();
+
+    res.status(200).json({
+      message: "Account deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete account error:", error);
+    res.status(500).json({
+      error: "Failed to delete account. Please try again.",
     });
   }
 };

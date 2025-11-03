@@ -26,6 +26,9 @@ export const Providers = ({ children }: ProvidersProps) => {
           style: {
             background: '#333',
             color: '#fff',
+            maxWidth: '90vw',
+            fontSize: '14px',
+            padding: '12px 16px',
           },
           success: {
             iconTheme: {

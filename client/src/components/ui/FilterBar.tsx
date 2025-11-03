@@ -1,21 +1,8 @@
 import React from 'react';
 import { Select } from './select/Select';
-// import { Select } from './Select';
+import type { FilterBarProps, FilterOptions } from './FilterBar.type';
 
-export interface FilterOptions {
-  status?: string;
-  priority?: string;
-  tags?: string[];
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
-
-interface FilterBarProps {
-  filters: FilterOptions;
-  onChange: (filters: FilterOptions) => void;
-  availableTags?: string[];
-  className?: string;
-}
+export type { FilterOptions };
 
 export const FilterBar: React.FC<FilterBarProps> = ({
   filters,

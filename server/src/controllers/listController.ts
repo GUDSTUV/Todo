@@ -1,11 +1,19 @@
+/// <reference path="../types/express.d.ts" />
 import { Request, Response } from "express";
 import List from "../models/List";
 import Task from "../models/Task";
+import User from "../models/User";
+import { getErrorMessage, isValidationError } from "../types/common";
 
 // Get all lists for the authenticated user
 export const getLists = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, error: "Unauthorized" });
+      return;
+    }
+
     const { includeArchived = false } = req.query;
 
     const query: any = { userId };
@@ -13,20 +21,25 @@ export const getLists = async (req: Request, res: Response): Promise<void> => {
       query.isArchived = false;
     }
 
-    const lists = await List.find(query).sort({ order: 1 }).lean();
+    const lists = await List.find(query)
+      .populate("sharedWith.userId", "name email avatarUrl")
+      .sort({ order: 1 })
+      .lean();
 
     res.status(200).json({
       success: true,
       count: lists.length,
       data: lists,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Get lists error:", error);
     res.status(500).json({
       success: false,
       error: "Failed to fetch lists",
       message:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development"
+          ? getErrorMessage(error)
+          : undefined,
     });
   }
 };
@@ -34,10 +47,13 @@ export const getLists = async (req: Request, res: Response): Promise<void> => {
 // Get a single list
 export const getList = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = req.user!.userId;
     const { id } = req.params;
 
-    const list = await List.findOne({ _id: id, userId });
+    const list = await List.findOne({ _id: id, userId }).populate(
+      "sharedWith.userId",
+      "name email avatarUrl"
+    );
 
     if (!list) {
       res.status(404).json({ success: false, error: "List not found" });
@@ -48,13 +64,15 @@ export const getList = async (req: Request, res: Response): Promise<void> => {
       success: true,
       data: list,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Get list error:", error);
     res.status(500).json({
       success: false,
       error: "Failed to fetch list",
       message:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development"
+          ? getErrorMessage(error)
+          : undefined,
     });
   }
 };
@@ -62,10 +80,10 @@ export const getList = async (req: Request, res: Response): Promise<void> => {
 // Create a new list
 export const createList = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = req.user!.userId;
     const listData = { ...req.body, userId };
 
     // Prevent multiple default lists
@@ -85,10 +103,10 @@ export const createList = async (
       success: true,
       data: list,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Create list error:", error);
 
-    if (error.name === "ValidationError") {
+    if (isValidationError(error)) {
       res.status(400).json({
         success: false,
         error: "Validation error",
@@ -101,7 +119,9 @@ export const createList = async (
       success: false,
       error: "Failed to create list",
       message:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development"
+          ? getErrorMessage(error)
+          : undefined,
     });
   }
 };
@@ -109,14 +129,17 @@ export const createList = async (
 // Update a list
 export const updateList = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = req.user!.userId;
     const { id } = req.params;
     const updates = req.body;
 
-    const list = await List.findOne({ _id: id, userId });
+    const list = await List.findOne({ _id: id, userId }).populate(
+      "sharedWith.userId",
+      "name email avatarUrl"
+    );
 
     if (!list) {
       res.status(404).json({ success: false, error: "List not found" });
@@ -139,10 +162,10 @@ export const updateList = async (
       success: true,
       data: list,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Update list error:", error);
 
-    if (error.name === "ValidationError") {
+    if (isValidationError(error)) {
       res.status(400).json({
         success: false,
         error: "Validation error",
@@ -155,7 +178,9 @@ export const updateList = async (
       success: false,
       error: "Failed to update list",
       message:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development"
+          ? getErrorMessage(error)
+          : undefined,
     });
   }
 };
@@ -163,14 +188,17 @@ export const updateList = async (
 // Delete a list (and optionally move tasks)
 export const deleteList = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = req.user!.userId;
     const { id } = req.params;
     const { moveTasksToListId } = req.query;
 
-    const list = await List.findOne({ _id: id, userId });
+    const list = await List.findOne({ _id: id, userId }).populate(
+      "sharedWith.userId",
+      "name email avatarUrl"
+    );
 
     if (!list) {
       res.status(404).json({ success: false, error: "List not found" });
@@ -197,7 +225,7 @@ export const deleteList = async (
       }
       await Task.updateMany(
         { listId: id, userId },
-        { listId: moveTasksToListId },
+        { listId: moveTasksToListId }
       );
       await (targetList as any).updateTaskCount();
     } else {
@@ -205,19 +233,21 @@ export const deleteList = async (
       await Task.updateMany({ listId: id, userId }, { listId: null });
     }
 
-    await list.deleteOne();
+    await List.deleteOne({ _id: id });
 
     res.status(200).json({
       success: true,
-      message: "List deleted successfully",
+      data: { message: "List successfully deleted" },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Delete list error:", error);
     res.status(500).json({
       success: false,
       error: "Failed to delete list",
       message:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development"
+          ? getErrorMessage(error)
+          : undefined,
     });
   }
 };
@@ -225,14 +255,17 @@ export const deleteList = async (
 // Archive/Unarchive a list
 export const archiveList = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = req.user!.userId;
     const { id } = req.params;
     const { isArchived } = req.body;
 
-    const list = await List.findOne({ _id: id, userId });
+    const list = await List.findOne({ _id: id, userId }).populate(
+      "sharedWith.userId",
+      "name email avatarUrl"
+    );
 
     if (!list) {
       res.status(404).json({ success: false, error: "List not found" });
@@ -246,13 +279,15 @@ export const archiveList = async (
       success: true,
       data: list,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Archive list error:", error);
     res.status(500).json({
       success: false,
       error: "Failed to archive list",
       message:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development"
+          ? getErrorMessage(error)
+          : undefined,
     });
   }
 };
@@ -260,10 +295,10 @@ export const archiveList = async (
 // Bulk update lists (e.g., for reordering)
 export const bulkUpdateLists = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = req.user!.userId;
     const { updates } = req.body; // Array of { id, updates }
 
     if (!Array.isArray(updates)) {
@@ -290,13 +325,15 @@ export const bulkUpdateLists = async (
       count: results.length,
       data: results,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Bulk update lists error:", error);
     res.status(500).json({
       success: false,
       error: "Failed to bulk update lists",
       message:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development"
+          ? getErrorMessage(error)
+          : undefined,
     });
   }
 };
@@ -304,32 +341,195 @@ export const bulkUpdateLists = async (
 // Refresh task count for a list
 export const refreshListTaskCount = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = req.user!.userId;
     const { id } = req.params;
 
-    const list = await List.findOne({ _id: id, userId });
+    const list = await List.findOne({ _id: id, userId }).populate(
+      "sharedWith.userId",
+      "name email avatarUrl"
+    );
 
     if (!list) {
       res.status(404).json({ success: false, error: "List not found" });
       return;
     }
 
-    await (list as any).updateTaskCount();
+    await list.updateTaskCount();
 
     res.status(200).json({
       success: true,
       data: list,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Refresh list task count error:", error);
     res.status(500).json({
       success: false,
       error: "Failed to refresh task count",
       message:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development"
+          ? getErrorMessage(error)
+          : undefined,
+    });
+  }
+};
+
+// Share a list with another user
+export const shareList = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.userId;
+    const { id } = req.params;
+    const { email, role = "viewer" } = req.body;
+
+    const list = await List.findOne({ _id: id, userId }).populate(
+      "sharedWith.userId",
+      "name email avatarUrl"
+    );
+    if (!list) {
+      res.status(404).json({ success: false, error: "List not found" });
+      return;
+    }
+
+    const targetUser = await User.findOne({ email: email.toLowerCase() });
+    if (!targetUser) {
+      res.status(404).json({ success: false, error: "User not found" });
+      return;
+    }
+
+    // Check if user is already a collaborator
+    const targetUserId = targetUser.id;
+    const existingCollaborator = list.sharedWith.find(
+      (c) => c.userId.toString() === targetUserId
+    );
+    if (existingCollaborator) {
+      res.status(400).json({
+        success: false,
+        error: "User is already a collaborator on this list",
+      });
+      return;
+    }
+
+    list.sharedWith.push({
+      userId: targetUserId,
+      role: role as "viewer" | "editor",
+      invitedAt: new Date(),
+    });
+
+    await list.save();
+
+    res.status(200).json({
+      success: true,
+      data: list,
+    });
+  } catch (error) {
+    console.error("Share list error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to share list",
+      message:
+        process.env.NODE_ENV === "development"
+          ? getErrorMessage(error)
+          : undefined,
+    });
+  }
+};
+
+// Remove a collaborator from a list
+export const removeCollaborator = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user!.userId;
+    const { id, collaboratorId } = req.params;
+
+    const list = await List.findOne({ _id: id, userId }).populate(
+      "sharedWith.userId",
+      "name email avatarUrl"
+    );
+    if (!list) {
+      res.status(404).json({ success: false, error: "List not found" });
+      return;
+    }
+
+    const collaboratorIndex = list.sharedWith.findIndex(
+      (c) => c.userId.toString() === collaboratorId
+    );
+
+    if (collaboratorIndex === -1) {
+      res.status(404).json({ success: false, error: "Collaborator not found" });
+      return;
+    }
+
+    list.sharedWith.splice(collaboratorIndex, 1);
+    await list.save();
+
+    res.status(200).json({
+      success: true,
+      data: list,
+    });
+  } catch (error) {
+    console.error("Remove collaborator error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to remove collaborator",
+      message:
+        process.env.NODE_ENV === "development"
+          ? getErrorMessage(error)
+          : undefined,
+    });
+  }
+};
+
+// Leave a shared list
+export const leaveSharedList = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user!.userId;
+    const { id } = req.params;
+
+    const list = await List.findOne({
+      _id: id,
+      "sharedWith.userId": userId,
+    }).populate("sharedWith.userId", "name email avatarUrl");
+
+    if (!list) {
+      res.status(404).json({ success: false, error: "List not found" });
+      return;
+    }
+
+    const collaboratorIndex = list.sharedWith.findIndex(
+      (c) => c.userId.toString() === userId
+    );
+
+    if (collaboratorIndex === -1) {
+      res.status(404).json({
+        success: false,
+        error: "You are not a collaborator on this list",
+      });
+      return;
+    }
+
+    list.sharedWith.splice(collaboratorIndex, 1);
+    await list.save();
+
+    res.status(200).json({
+      success: true,
+      data: { message: "Successfully left the list" },
+    });
+  } catch (error) {
+    console.error("Leave shared list error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to leave list",
+      message:
+        process.env.NODE_ENV === "development"
+          ? getErrorMessage(error)
+          : undefined,
     });
   }
 };

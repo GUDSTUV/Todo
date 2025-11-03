@@ -1,6 +1,10 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Model } from "mongoose";
 
-export interface IList extends Document {
+interface IListMethods {
+  updateTaskCount(): Promise<void>;
+}
+
+export interface IList extends Document, IListMethods {
   userId: mongoose.Types.ObjectId;
   name: string;
   description?: string;
@@ -12,37 +16,40 @@ export interface IList extends Document {
   taskCount: number;
   syncVersion: number;
   lastModified: Date;
+  sharedWith: Array<{
+    userId: mongoose.Types.ObjectId;
+    role: "viewer" | "editor";
+    invitedAt: Date;
+  }>;
   createdAt: Date;
   updatedAt: Date;
+  updateTaskCount(): Promise<void>;
 }
 
-const listSchema = new Schema<IList>(
+const listSchema = new mongoose.Schema<IList, Model<IList, {}, IListMethods>>(
   {
     userId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
       index: true,
     },
     name: {
       type: String,
-      required: [true, "List name is required"],
+      required: true,
       trim: true,
-      maxlength: [100, "List name cannot exceed 100 characters"],
     },
     description: {
       type: String,
       trim: true,
-      maxlength: [500, "Description cannot exceed 500 characters"],
     },
     color: {
       type: String,
-      default: "#3B82F6", // Blue
-      match: [/^#[0-9A-F]{6}$/i, "Color must be a valid hex color"],
+      default: "#3b82f6",
     },
     icon: {
       type: String,
-      default: "list",
+      default: "📝",
     },
     order: {
       type: Number,
@@ -69,10 +76,28 @@ const listSchema = new Schema<IList>(
       type: Date,
       default: Date.now,
     },
+    sharedWith: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        role: {
+          type: String,
+          enum: ["viewer", "editor"],
+          default: "viewer",
+        },
+        invitedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 // Compound indexes for queries

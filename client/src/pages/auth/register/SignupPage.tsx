@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { initGoogleAuth, handleGoogleSignup } from '../../../utils/googleAuth';
 import api from '../../../api/client/client';
@@ -29,6 +29,7 @@ const signupSchema = z
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const loginToStore = useAuthStore((s) => s.login);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -37,6 +38,20 @@ const SignupPage: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [invitedBy, setInvitedBy] = useState<string>('');
+  const redirectPath = searchParams.get('redirect') || '/dashboard';
+
+  // Pre-fill email from invitation link
+  useEffect(() => {
+    const emailFromUrl = searchParams.get('email');
+    const inviterName = searchParams.get('invitedBy');
+    if (emailFromUrl) {
+      setEmail(decodeURIComponent(emailFromUrl));
+    }
+    if (inviterName) {
+      setInvitedBy(decodeURIComponent(inviterName));
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     initGoogleAuth(async (credential) => {
@@ -45,12 +60,12 @@ const SignupPage: React.FC = () => {
         const { token, user } = resp.data as { token: string; user: { id: string; name: string; email: string; preferences: { theme: 'light' | 'dark' | 'system'; timezone: string; language: string } } };
         loginToStore(user, token, true); // Default to remember me for new signups
         toast.success('Signed in with Google');
-        navigate('/dashboard');
+        navigate(redirectPath);
       } catch {
         toast.error('Google sign-in failed');
       }
     });
-  }, [loginToStore, navigate]);
+  }, [loginToStore, navigate, redirectPath]);
 
   const validate = () => {
     const result = signupSchema.safeParse({ name, email, password, confirmPassword });
@@ -80,7 +95,7 @@ const SignupPage: React.FC = () => {
       const { token, user } = response.data as { token: string; user: { id: string; name: string; email: string; preferences: { theme: 'light' | 'dark' | 'system'; timezone: string; language: string } } };
       loginToStore(user, token, true); // Default to remember me for new signups
       toast.success('Account created successfully');
-      navigate('/dashboard');
+      navigate(redirectPath);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { error?: string; details?: Array<{field: string; message: string}> }; status?: number }; message?: string };
       
@@ -103,6 +118,25 @@ const SignupPage: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-4">
       <div className="max-w-md w-full space-y-6 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
         <h1 className="text-2xl font-bold text-center mb-1">Create an account</h1>
+        
+        {invitedBy && (
+          <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
+              </svg>
+              <div>
+                <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                  You've been invited!
+                </p>
+                <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+                  <strong>{invitedBy}</strong> invited you to collaborate on Todu
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <h6 className="text-center mb-2">Already have an account?
          <Link to="/login" className="text-blue-600 hover:underline"> Sign in</Link></h6>
         <form onSubmit={handleSubmit} noValidate className="space-y-2">

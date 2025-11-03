@@ -3,13 +3,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.refreshListTaskCount = exports.bulkUpdateLists = exports.archiveList = exports.deleteList = exports.updateList = exports.createList = exports.getList = exports.getLists = void 0;
+exports.leaveSharedList = exports.removeCollaborator = exports.shareList = exports.refreshListTaskCount = exports.bulkUpdateLists = exports.archiveList = exports.deleteList = exports.updateList = exports.createList = exports.getList = exports.getLists = void 0;
 const List_1 = __importDefault(require("../models/List"));
 const Task_1 = __importDefault(require("../models/Task"));
+const User_1 = __importDefault(require("../models/User"));
+const common_1 = require("../types/common");
 // Get all lists for the authenticated user
 const getLists = async (req, res) => {
     try {
-        const userId = req.user.userId;
+        const userId = req.user?.userId;
+        if (!userId) {
+            res.status(401).json({ success: false, error: "Unauthorized" });
+            return;
+        }
         const { includeArchived = false } = req.query;
         const query = { userId };
         if (!includeArchived || includeArchived === "false") {
@@ -27,7 +33,9 @@ const getLists = async (req, res) => {
         res.status(500).json({
             success: false,
             error: "Failed to fetch lists",
-            message: process.env.NODE_ENV === "development" ? error.message : undefined,
+            message: process.env.NODE_ENV === "development"
+                ? (0, common_1.getErrorMessage)(error)
+                : undefined,
         });
     }
 };
@@ -52,7 +60,9 @@ const getList = async (req, res) => {
         res.status(500).json({
             success: false,
             error: "Failed to fetch list",
-            message: process.env.NODE_ENV === "development" ? error.message : undefined,
+            message: process.env.NODE_ENV === "development"
+                ? (0, common_1.getErrorMessage)(error)
+                : undefined,
         });
     }
 };
@@ -79,7 +89,7 @@ const createList = async (req, res) => {
     }
     catch (error) {
         console.error("Create list error:", error);
-        if (error.name === "ValidationError") {
+        if ((0, common_1.isValidationError)(error)) {
             res.status(400).json({
                 success: false,
                 error: "Validation error",
@@ -90,7 +100,9 @@ const createList = async (req, res) => {
         res.status(500).json({
             success: false,
             error: "Failed to create list",
-            message: process.env.NODE_ENV === "development" ? error.message : undefined,
+            message: process.env.NODE_ENV === "development"
+                ? (0, common_1.getErrorMessage)(error)
+                : undefined,
         });
     }
 };
@@ -122,7 +134,7 @@ const updateList = async (req, res) => {
     }
     catch (error) {
         console.error("Update list error:", error);
-        if (error.name === "ValidationError") {
+        if ((0, common_1.isValidationError)(error)) {
             res.status(400).json({
                 success: false,
                 error: "Validation error",
@@ -133,7 +145,9 @@ const updateList = async (req, res) => {
         res.status(500).json({
             success: false,
             error: "Failed to update list",
-            message: process.env.NODE_ENV === "development" ? error.message : undefined,
+            message: process.env.NODE_ENV === "development"
+                ? (0, common_1.getErrorMessage)(error)
+                : undefined,
         });
     }
 };
@@ -173,10 +187,10 @@ const deleteList = async (req, res) => {
             // Move tasks to inbox (null listId)
             await Task_1.default.updateMany({ listId: id, userId }, { listId: null });
         }
-        await list.deleteOne();
+        await List_1.default.deleteOne({ _id: id });
         res.status(200).json({
             success: true,
-            message: "List deleted successfully",
+            data: { message: "List successfully deleted" },
         });
     }
     catch (error) {
@@ -184,7 +198,9 @@ const deleteList = async (req, res) => {
         res.status(500).json({
             success: false,
             error: "Failed to delete list",
-            message: process.env.NODE_ENV === "development" ? error.message : undefined,
+            message: process.env.NODE_ENV === "development"
+                ? (0, common_1.getErrorMessage)(error)
+                : undefined,
         });
     }
 };
@@ -212,7 +228,9 @@ const archiveList = async (req, res) => {
         res.status(500).json({
             success: false,
             error: "Failed to archive list",
-            message: process.env.NODE_ENV === "development" ? error.message : undefined,
+            message: process.env.NODE_ENV === "development"
+                ? (0, common_1.getErrorMessage)(error)
+                : undefined,
         });
     }
 };
@@ -250,7 +268,9 @@ const bulkUpdateLists = async (req, res) => {
         res.status(500).json({
             success: false,
             error: "Failed to bulk update lists",
-            message: process.env.NODE_ENV === "development" ? error.message : undefined,
+            message: process.env.NODE_ENV === "development"
+                ? (0, common_1.getErrorMessage)(error)
+                : undefined,
         });
     }
 };
@@ -276,8 +296,133 @@ const refreshListTaskCount = async (req, res) => {
         res.status(500).json({
             success: false,
             error: "Failed to refresh task count",
-            message: process.env.NODE_ENV === "development" ? error.message : undefined,
+            message: process.env.NODE_ENV === "development"
+                ? (0, common_1.getErrorMessage)(error)
+                : undefined,
         });
     }
 };
 exports.refreshListTaskCount = refreshListTaskCount;
+// Share a list with another user
+const shareList = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { id } = req.params;
+        const { email, role = "viewer" } = req.body;
+        const list = await List_1.default.findOne({ _id: id, userId });
+        if (!list) {
+            res.status(404).json({ success: false, error: "List not found" });
+            return;
+        }
+        const targetUser = await User_1.default.findOne({ email: email.toLowerCase() });
+        if (!targetUser) {
+            res.status(404).json({ success: false, error: "User not found" });
+            return;
+        }
+        // Check if user is already a collaborator
+        const targetUserId = targetUser.id;
+        const existingCollaborator = list.sharedWith.find((c) => c.userId.toString() === targetUserId);
+        if (existingCollaborator) {
+            res.status(400).json({
+                success: false,
+                error: "User is already a collaborator on this list",
+            });
+            return;
+        }
+        list.sharedWith.push({
+            userId: targetUserId,
+            role: role,
+            invitedAt: new Date(),
+        });
+        await list.save();
+        res.status(200).json({
+            success: true,
+            data: list,
+        });
+    }
+    catch (error) {
+        console.error("Share list error:", error);
+        res.status(500).json({
+            success: false,
+            error: "Failed to share list",
+            message: process.env.NODE_ENV === "development"
+                ? (0, common_1.getErrorMessage)(error)
+                : undefined,
+        });
+    }
+};
+exports.shareList = shareList;
+// Remove a collaborator from a list
+const removeCollaborator = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { id, collaboratorId } = req.params;
+        const list = await List_1.default.findOne({ _id: id, userId });
+        if (!list) {
+            res.status(404).json({ success: false, error: "List not found" });
+            return;
+        }
+        const collaboratorIndex = list.sharedWith.findIndex((c) => c.userId.toString() === collaboratorId);
+        if (collaboratorIndex === -1) {
+            res.status(404).json({ success: false, error: "Collaborator not found" });
+            return;
+        }
+        list.sharedWith.splice(collaboratorIndex, 1);
+        await list.save();
+        res.status(200).json({
+            success: true,
+            data: list,
+        });
+    }
+    catch (error) {
+        console.error("Remove collaborator error:", error);
+        res.status(500).json({
+            success: false,
+            error: "Failed to remove collaborator",
+            message: process.env.NODE_ENV === "development"
+                ? (0, common_1.getErrorMessage)(error)
+                : undefined,
+        });
+    }
+};
+exports.removeCollaborator = removeCollaborator;
+// Leave a shared list
+const leaveSharedList = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { id } = req.params;
+        const list = await List_1.default.findOne({
+            _id: id,
+            "sharedWith.userId": userId,
+        });
+        if (!list) {
+            res.status(404).json({ success: false, error: "List not found" });
+            return;
+        }
+        const collaboratorIndex = list.sharedWith.findIndex((c) => c.userId.toString() === userId);
+        if (collaboratorIndex === -1) {
+            res.status(404).json({
+                success: false,
+                error: "You are not a collaborator on this list",
+            });
+            return;
+        }
+        list.sharedWith.splice(collaboratorIndex, 1);
+        await list.save();
+        res.status(200).json({
+            success: true,
+            data: { message: "Successfully left the list" },
+        });
+    }
+    catch (error) {
+        console.error("Leave shared list error:", error);
+        res.status(500).json({
+            success: false,
+            error: "Failed to leave list",
+            message: process.env.NODE_ENV === "development"
+                ? (0, common_1.getErrorMessage)(error)
+                : undefined,
+        });
+    }
+};
+exports.leaveSharedList = leaveSharedList;

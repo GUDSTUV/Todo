@@ -22,4 +22,8 @@ router
 // Additional operations
 router.patch("/:id/archive", listController_1.archiveList);
 router.post("/:id/refresh-count", listController_1.refreshListTaskCount);
+// Collaboration operations
+router.post("/:id/share", listController_1.shareList);
+router.delete("/:id/collaborators/:collaboratorId", listController_1.removeCollaborator);
+router.post("/:id/leave", listController_1.leaveSharedList);
 exports.default = router;

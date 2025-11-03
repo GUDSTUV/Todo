@@ -7,19 +7,61 @@ exports.getTaskStats = exports.bulkUpdateTasks = exports.deleteTask = exports.up
 const Task_1 = __importDefault(require("../models/Task"));
 const List_1 = __importDefault(require("../models/List"));
 const mongoose_1 = __importDefault(require("mongoose"));
-// Get all tasks for the authenticated user
+const activityService_1 = require("../services/activityService");
+// Helper function to check if user has access to a list (owner or collaborator)
+const hasListAccess = async (listId, userId) => {
+    if (!listId)
+        return true; // Tasks without a list belong to the user
+    const list = await List_1.default.findOne({
+        _id: listId,
+        $or: [{ userId }, { "sharedWith.userId": userId }],
+    });
+    return !!list;
+};
+// Helper function to check if user can edit a list (owner or editor)
+const canEditList = async (listId, userId) => {
+    if (!listId)
+        return true; // Tasks without a list can be edited by owner
+    const list = await List_1.default.findOne({
+        _id: listId,
+        $or: [
+            { userId }, // Owner
+            { sharedWith: { $elemMatch: { userId, role: "editor" } } }, // Editor
+        ],
+    });
+    return !!list;
+};
+// Get all tasks for the authenticated user (including shared lists)
 const getTasks = async (req, res) => {
     try {
         const userId = req.user.userId;
         const { listId, status, priority, tags, search, dueDate, sortBy = "order", sortOrder = "asc", } = req.query;
-        // Build query
-        const query = { userId };
+        // Get all lists accessible to the user (owned or shared)
+        const accessibleLists = await List_1.default.find({
+            $or: [{ userId }, { "sharedWith.userId": userId }],
+        }).select("_id");
+        const accessibleListIds = accessibleLists.map((list) => list._id);
+        // Build query - include tasks from accessible lists OR tasks without a list (owned by user)
+        const query = {
+            $or: [
+                { userId }, // User's own tasks
+                { listId: { $in: accessibleListIds } }, // Tasks in shared lists
+            ],
+        };
         if (listId) {
             if (listId === "null") {
                 query.listId = null;
+                delete query.$or; // Only show user's own tasks without a list
+                query.userId = userId;
             }
             else {
+                // Verify user has access to this specific list
+                if (!(await hasListAccess(listId, userId))) {
+                    res.status(403).json({ success: false, error: "Access denied" });
+                    return;
+                }
                 query.listId = listId;
+                delete query.$or;
             }
         }
         if (status) {
@@ -69,9 +111,30 @@ const getTask = async (req, res) => {
     try {
         const userId = req.user.userId;
         const { id } = req.params;
-        const task = await Task_1.default.findOne({ _id: id, userId });
+        // First, try to find the task
+        const task = await Task_1.default.findById(id);
         if (!task) {
             res.status(404).json({ success: false, error: "Task not found" });
+            return;
+        }
+        // Check if user owns the task
+        if (task.userId.toString() === userId) {
+            res.status(200).json({
+                success: true,
+                data: task,
+            });
+            return;
+        }
+        // Check if user has access through a shared list
+        const list = await List_1.default.findOne({
+            _id: task.listId,
+            "sharedWith.userId": userId,
+        });
+        if (!list) {
+            res.status(403).json({
+                success: false,
+                error: "You don't have permission to view this task",
+            });
             return;
         }
         res.status(200).json({
@@ -94,11 +157,13 @@ const createTask = async (req, res) => {
     try {
         const userId = req.user.userId;
         const taskData = { ...req.body, userId };
-        // Validate listId if provided
+        // Validate listId if provided and check edit permissions
         if (taskData.listId) {
-            const list = await List_1.default.findOne({ _id: taskData.listId, userId });
-            if (!list) {
-                res.status(404).json({ success: false, error: "List not found" });
+            if (!(await canEditList(taskData.listId, userId))) {
+                res.status(403).json({
+                    success: false,
+                    error: "You don't have permission to add tasks to this list",
+                });
                 return;
             }
         }
@@ -144,25 +209,53 @@ const updateTask = async (req, res) => {
         const userId = req.user.userId;
         const { id } = req.params;
         const updates = req.body;
-        // Validate listId if being updated
-        if (updates.listId) {
-            const list = await List_1.default.findOne({ _id: updates.listId, userId });
-            if (!list) {
-                res.status(404).json({ success: false, error: "List not found" });
-                return;
-            }
-        }
-        const task = await Task_1.default.findOne({ _id: id, userId });
+        // Find the task
+        const task = await Task_1.default.findById(id);
         if (!task) {
             res.status(404).json({ success: false, error: "Task not found" });
             return;
         }
+        // Check if user can edit this task (owner or has edit access to the list)
+        const taskOwnedByUser = task.userId.toString() === userId.toString();
+        const hasEditAccess = task.listId
+            ? await canEditList(task.listId.toString(), userId)
+            : false;
+        if (!taskOwnedByUser && !hasEditAccess) {
+            res.status(403).json({
+                success: false,
+                error: "You don't have permission to edit this task",
+            });
+            return;
+        }
+        // Validate new listId if being updated
+        if (updates.listId && updates.listId !== task.listId?.toString()) {
+            if (!(await canEditList(updates.listId, userId))) {
+                res.status(403).json({
+                    success: false,
+                    error: "You don't have permission to move tasks to this list",
+                });
+                return;
+            }
+        }
         const oldListId = task.listId;
+        const oldStatus = task.status;
         // Update task fields
         Object.keys(updates).forEach((key) => {
             task[key] = updates[key];
         });
         await task.save();
+        // Log activity for status change
+        if (updates.status && updates.status !== oldStatus) {
+            await (0, activityService_1.logActivity)({
+                userId,
+                taskId: task._id,
+                listId: task.listId,
+                type: "task_status_changed",
+                description: `Status changed from "${oldStatus}" to "${updates.status}"`,
+                metadata: { oldStatus, newStatus: updates.status },
+                visibility: "team",
+            });
+        }
         // Update task counts for affected lists
         if (oldListId && oldListId.toString() !== task.listId?.toString()) {
             const oldList = await List_1.default.findById(oldListId);
@@ -204,9 +297,21 @@ const deleteTask = async (req, res) => {
     try {
         const userId = req.user.userId;
         const { id } = req.params;
-        const task = await Task_1.default.findOne({ _id: id, userId });
+        const task = await Task_1.default.findById(id);
         if (!task) {
             res.status(404).json({ success: false, error: "Task not found" });
+            return;
+        }
+        // Check if user can delete this task (owner or has edit access to the list)
+        const taskOwnedByUser = task.userId.toString() === userId.toString();
+        const hasEditAccess = task.listId
+            ? await canEditList(task.listId.toString(), userId)
+            : false;
+        if (!taskOwnedByUser && !hasEditAccess) {
+            res.status(403).json({
+                success: false,
+                error: "You don't have permission to delete this task",
+            });
             return;
         }
         const listId = task.listId;

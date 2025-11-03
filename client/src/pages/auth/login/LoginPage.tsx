@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { initGoogleAuth, handleGoogleLogin as triggerGoogleLogin } from '../../../utils/googleAuth';
 import api from '../../../api/client/client';
@@ -17,6 +17,7 @@ const loginSchema = z.object({
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const loginToStore = useAuthStore((s) => s.login);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,6 +26,7 @@ const LoginPage = () => {
   const [serverError, setServerError] = useState<string>('');
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const redirectPath = searchParams.get('redirect') || '/dashboard';
 
   const validate = () => {
     const result = loginSchema.safeParse({ email, password });
@@ -54,11 +56,11 @@ const LoginPage = () => {
 
     setIsLoading(true);
     try {
-      const response = await api.post('/auth/login', { email, password });
-      const { token, user } = response.data as { token: string; user: { id: string; name: string; email: string; preferences: { theme: 'light' | 'dark' | 'system'; timezone: string; language: string } } };
+      const resp = await api.post('/auth/login', { email, password });
+      const { token, user } = resp.data as { token: string; user: { id: string; name: string; email: string; preferences: { theme: 'light' | 'dark' | 'system'; timezone: string; language: string } } };
       loginToStore(user, token, rememberMe);
       toast.success('Login successful');
-      navigate('/dashboard');
+      navigate(redirectPath);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { error?: string }; status?: number }; message?: string };
       const errorMessage = err?.response?.data?.error || 'Login failed. Please try again.';
@@ -79,12 +81,12 @@ const LoginPage = () => {
         toast.success('Logged in with Google');
         // Small delay to ensure state completes
         await new Promise(resolve => setTimeout(resolve, 100));
-        navigate('/dashboard');
+        navigate(redirectPath);
       } catch {
         toast.error('Google login failed');
       }
     });
-  }, [loginToStore, navigate]);
+  }, [loginToStore, navigate, redirectPath]);
 
   const handleGoogleLogin = () => {
     // trigger the Google credential chooser (defined in utils)
