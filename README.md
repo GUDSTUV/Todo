@@ -169,36 +169,12 @@ Todu/
 - Integration tests with Supertest
 - E2E tests with Cypress
 
-## Deployment
-
-### Frontend (Vercel/Netlify)
-
-```bash
-cd client
-npm run build
-# Deploy dist/ folder
-```
-
-### Backend (Heroku/Render/Fly.io)
-
-```bash
-cd server
-npm run build
-# Deploy with NODE_ENV=production
-```
-
-### Environment Variables
-
-Make sure to set all required environment variables in your deployment platform.
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
 
-MIT License - feel free to use this project for learning or production.
 
 ## Author
 
-Built with ❤️ as a comprehensive example of modern full-stack development.
+Built with ❤️ by David Sedzro as a comprehensive example of modern full-stack development.
