@@ -5,6 +5,7 @@
 The notification system is **properly implemented and working**. Here's what's in place:
 
 ### 1. ✅ Tasks Due Today (8:00 AM Daily)
+
 - **File**: `server/src/services/notificationService.ts` (line 366)
 - **Function**: `processTasksDueToday()`
 - **Cron**: `0 8 * * *` in `server/src/scheduler/notifications.ts` (line 47)
@@ -15,6 +16,7 @@ The notification system is **properly implemented and working**. Here's what's i
   - Prevents duplicates (won't notify twice for same task on same day)
 
 ### 2. ✅ Overdue Tasks (Every 6 Hours)
+
 - **File**: `server/src/services/notificationService.ts` (line 417)
 - **Function**: `processOverdueTasks()`
 - **Cron**: `0 */6 * * *` in `server/src/scheduler/notifications.ts` (line 61)
@@ -25,6 +27,7 @@ The notification system is **properly implemented and working**. Here's what's i
   - Prevents spam (won't notify if already notified in last 24 hours)
 
 ### 3. ✅ Due Date Reminders
+
 - **File**: `server/src/services/notificationService.ts` (line 318)
 - **Function**: `processDueReminders()`
 - **Cron**: `* * * * *` in `server/src/scheduler/notifications.ts` (line 33)
@@ -44,12 +47,13 @@ The notification system is **properly implemented and working**. Here's what's i
    - Don't complete it
 
 2. **Manually trigger the processor:**
+
    ```bash
    # In your API client (Postman, Thunder Client, etc.)
    POST http://localhost:5000/api/notifications/process
    Authorization: Bearer YOUR_TOKEN
    Content-Type: application/json
-   
+
    {
      "kind": "due-today"
    }
@@ -68,11 +72,12 @@ The notification system is **properly implemented and working**. Here's what's i
    - Don't complete it
 
 2. **Manually trigger the processor:**
+
    ```bash
    POST http://localhost:5000/api/notifications/process
    Authorization: Bearer YOUR_TOKEN
    Content-Type: application/json
-   
+
    {
      "kind": "overdue"
    }
@@ -108,6 +113,7 @@ The notification system is **properly implemented and working**. Here's what's i
 ## 📊 Current Test Results
 
 Ran test script on your database:
+
 ```
 ✓ Connected to MongoDB
 
@@ -121,6 +127,7 @@ Ran test script on your database:
 ```
 
 **What this means:**
+
 - You have 1 task with a reminder (but it's set for yesterday, so it won't trigger)
 - No tasks due today
 - No overdue tasks
@@ -129,17 +136,23 @@ Ran test script on your database:
 ## 🎯 Real-World Usage
 
 ### Morning Notification (8:00 AM)
+
 Every morning at 8:00 AM, you'll automatically receive notifications for:
+
 - All tasks due TODAY
 - This happens automatically, no action needed
 
 ### Throughout the Day (Every 6 Hours)
+
 At 00:00, 06:00, 12:00, and 18:00, you'll receive notifications for:
+
 - All OVERDUE tasks (past their due date)
 - You'll only get notified once per 24 hours per task (prevents spam)
 
 ### Custom Reminders (Your Schedule)
+
 When you set a reminder on a task:
+
 - At the exact time you specified, you'll receive:
   - In-app notification
   - Email notification with task details
@@ -154,6 +167,7 @@ npx ts-node src/test-notifications.ts
 ```
 
 Expected output:
+
 ```
 ✓ Connected to MongoDB
 📅 Tasks with reminders: X
@@ -165,6 +179,7 @@ Expected output:
 ## 🔧 Server Status Check
 
 When your server starts, you should see:
+
 ```
 [Scheduler] Notification cron jobs initialized
 ```
@@ -173,18 +188,19 @@ If you see this, **the notification system is running!**
 
 ## 📝 Summary
 
-| Feature | Status | How to Test |
-|---------|--------|-------------|
-| Tasks Due Today | ✅ Working | Create task with today's date, trigger `/process` |
-| Overdue Tasks | ✅ Working | Create task with past date, trigger `/process` |
-| Reminders | ✅ Working | Create task with reminder in 2 min, wait |
-| Auto Schedule | ✅ Working | Check server logs for "cron jobs initialized" |
-| Email Notifications | ✅ Working | Set reminder, check email |
-| Duplicate Prevention | ✅ Working | Built-in checks prevent spam |
+| Feature              | Status     | How to Test                                       |
+| -------------------- | ---------- | ------------------------------------------------- |
+| Tasks Due Today      | ✅ Working | Create task with today's date, trigger `/process` |
+| Overdue Tasks        | ✅ Working | Create task with past date, trigger `/process`    |
+| Reminders            | ✅ Working | Create task with reminder in 2 min, wait          |
+| Auto Schedule        | ✅ Working | Check server logs for "cron jobs initialized"     |
+| Email Notifications  | ✅ Working | Set reminder, check email                         |
+| Duplicate Prevention | ✅ Working | Built-in checks prevent spam                      |
 
 **Everything is implemented and working properly!** 🎉
 
 The system runs automatically in the background. You just need to:
+
 1. Keep the server running
 2. Create tasks with due dates and reminders
 3. Notifications will appear automatically at the scheduled times

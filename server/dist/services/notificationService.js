@@ -247,7 +247,6 @@ const sendTaskReminderEmail = async (taskId) => {
             message,
             html,
         });
-        console.log(`Task reminder email sent to ${user.email} for task ${taskId}`);
     }
     catch (error) {
         console.error("Error sending task reminder email:", error);
@@ -270,7 +269,6 @@ const processDueReminders = async () => {
             },
             status: { $ne: "done" },
         }).lean();
-        console.log(`[processDueReminders] Found ${tasks.length} tasks with reminders due`);
         let processed = 0;
         let errors = 0;
         for (const task of tasks) {
@@ -286,7 +284,6 @@ const processDueReminders = async () => {
                 errors++;
             }
         }
-        console.log(`Processed ${processed} reminders with ${errors} errors`);
         return { processed, errors };
     }
     catch (error) {
@@ -312,7 +309,6 @@ const processTasksDueToday = async () => {
             },
             status: { $ne: "done" },
         }).lean();
-        console.log(`[processTasksDueToday] Found ${tasks.length} tasks due today`);
         let processed = 0;
         let errors = 0;
         for (const task of tasks) {
@@ -328,16 +324,12 @@ const processTasksDueToday = async () => {
                     await (0, exports.createTaskDueNotification)(task._id.toString());
                     processed++;
                 }
-                else {
-                    console.log(`[processTasksDueToday] Skipping task ${task._id} - already notified today`);
-                }
             }
             catch (error) {
                 console.error(`Error processing due task ${task._id}:`, error);
                 errors++;
             }
         }
-        console.log(`Processed ${processed} due tasks with ${errors} errors`);
         return { processed, errors };
     }
     catch (error) {
@@ -357,7 +349,6 @@ const processOverdueTasks = async () => {
             dueDate: { $lt: now },
             status: { $ne: "done" },
         }).lean();
-        console.log(`[processOverdueTasks] Found ${tasks.length} overdue tasks`);
         let processed = 0;
         let errors = 0;
         for (const task of tasks) {
@@ -374,16 +365,12 @@ const processOverdueTasks = async () => {
                     await (0, exports.createTaskOverdueNotification)(task._id.toString());
                     processed++;
                 }
-                else {
-                    console.log(`[processOverdueTasks] Skipping task ${task._id} - already notified recently`);
-                }
             }
             catch (error) {
                 console.error(`Error processing overdue task ${task._id}:`, error);
                 errors++;
             }
         }
-        console.log(`Processed ${processed} overdue tasks with ${errors} errors`);
         return { processed, errors };
     }
     catch (error) {

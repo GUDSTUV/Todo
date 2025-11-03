@@ -68,6 +68,7 @@
 ## 🔄 Processing Flow
 
 ### 1. Reminder Processing (Every Minute)
+
 ```
 ┌─ CRON TRIGGER (Every Minute) ─┐
 │                                │
@@ -92,6 +93,7 @@
 ```
 
 ### 2. Due Today Processing (Daily 8:00 AM)
+
 ```
 ┌─ CRON TRIGGER (8:00 AM) ──────┐
 │                                │
@@ -118,6 +120,7 @@
 ```
 
 ### 3. Overdue Processing (Every 6 Hours)
+
 ```
 ┌─ CRON TRIGGER (0,6,12,18:00) ─┐
 │                                │
@@ -174,15 +177,16 @@
 
 ## 🎯 Notification Types & Timing
 
-| Type | When | Frequency | Email | Duplicate Check |
-|------|------|-----------|-------|-----------------|
-| **Reminder** | User-defined time | Once | ✅ Yes | ❌ No (one-time) |
-| **Due Today** | 8:00 AM if due today | Once/day | ❌ No | ✅ Yes (daily) |
-| **Overdue** | Every 6h if past due | 4x/day | ❌ No | ✅ Yes (24h) |
+| Type          | When                 | Frequency | Email  | Duplicate Check  |
+| ------------- | -------------------- | --------- | ------ | ---------------- |
+| **Reminder**  | User-defined time    | Once      | ✅ Yes | ❌ No (one-time) |
+| **Due Today** | 8:00 AM if due today | Once/day  | ❌ No  | ✅ Yes (daily)   |
+| **Overdue**   | Every 6h if past due | 4x/day    | ❌ No  | ✅ Yes (24h)     |
 
 ## 💾 Database Schema
 
 ### Notification Document
+
 ```typescript
 {
   _id: ObjectId,
@@ -204,6 +208,7 @@
 ```
 
 ### Task Document (Relevant Fields)
+
 ```typescript
 {
   _id: ObjectId,
@@ -219,54 +224,58 @@
 ## 🔍 Query Examples
 
 ### Find Tasks for Reminders
+
 ```javascript
 Task.find({
   reminderDate: {
-    $lte: new Date(now.getTime() + 60000),  // Next minute
-    $gte: now
+    $lte: new Date(now.getTime() + 60000), // Next minute
+    $gte: now,
   },
-  status: { $ne: 'done' }
-})
+  status: { $ne: "done" },
+});
 ```
 
 ### Find Tasks Due Today
+
 ```javascript
 Task.find({
   dueDate: {
-    $gte: today,      // Today 00:00:00
-    $lt: tomorrow     // Tomorrow 00:00:00
+    $gte: today, // Today 00:00:00
+    $lt: tomorrow, // Tomorrow 00:00:00
   },
-  status: { $ne: 'done' }
-})
+  status: { $ne: "done" },
+});
 ```
 
 ### Find Overdue Tasks
+
 ```javascript
 Task.find({
   dueDate: { $lt: now },
-  status: { $ne: 'done' }
-})
+  status: { $ne: "done" },
+});
 ```
 
 ## 📊 Monitoring Queries
 
 ### Check Recent Notifications
+
 ```javascript
 // Due today notifications created today
 Notification.findOne({
   userId: task.userId,
   taskId: task._id,
-  type: 'task_due',
-  createdAt: { $gte: today }
-})
+  type: "task_due",
+  createdAt: { $gte: today },
+});
 
 // Overdue notifications in last 24h
 Notification.findOne({
   userId: task.userId,
   taskId: task._id,
-  type: 'task_overdue',
-  createdAt: { $gte: oneDayAgo }
-})
+  type: "task_overdue",
+  createdAt: { $gte: oneDayAgo },
+});
 ```
 
 ## 🎬 Example Timeline

@@ -56,10 +56,12 @@ const sendEmail = async (options) => {
     // Send email
     try {
         const info = await transporter.sendMail(mailOptions);
-        // If using Ethereal (for dev), output preview URL
-        const preview = nodemailer_1.default.getTestMessageUrl?.(info);
-        if (preview) {
-            console.log("[sendEmail] Preview URL:", preview);
+        // If using Ethereal (for dev), output preview URL in development only
+        if (process.env.NODE_ENV === "development") {
+            const preview = nodemailer_1.default.getTestMessageUrl?.(info);
+            if (preview) {
+                console.log("[sendEmail] Preview URL:", preview);
+            }
         }
     }
     catch (err) {

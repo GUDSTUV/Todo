@@ -21,7 +21,10 @@ const getLists = async (req, res) => {
         if (!includeArchived || includeArchived === "false") {
             query.isArchived = false;
         }
-        const lists = await List_1.default.find(query).sort({ order: 1 }).lean();
+        const lists = await List_1.default.find(query)
+            .populate("sharedWith.userId", "name email avatarUrl")
+            .sort({ order: 1 })
+            .lean();
         res.status(200).json({
             success: true,
             count: lists.length,
@@ -45,7 +48,7 @@ const getList = async (req, res) => {
     try {
         const userId = req.user.userId;
         const { id } = req.params;
-        const list = await List_1.default.findOne({ _id: id, userId });
+        const list = await List_1.default.findOne({ _id: id, userId }).populate("sharedWith.userId", "name email avatarUrl");
         if (!list) {
             res.status(404).json({ success: false, error: "List not found" });
             return;
@@ -113,7 +116,7 @@ const updateList = async (req, res) => {
         const userId = req.user.userId;
         const { id } = req.params;
         const updates = req.body;
-        const list = await List_1.default.findOne({ _id: id, userId });
+        const list = await List_1.default.findOne({ _id: id, userId }).populate("sharedWith.userId", "name email avatarUrl");
         if (!list) {
             res.status(404).json({ success: false, error: "List not found" });
             return;
@@ -158,7 +161,7 @@ const deleteList = async (req, res) => {
         const userId = req.user.userId;
         const { id } = req.params;
         const { moveTasksToListId } = req.query;
-        const list = await List_1.default.findOne({ _id: id, userId });
+        const list = await List_1.default.findOne({ _id: id, userId }).populate("sharedWith.userId", "name email avatarUrl");
         if (!list) {
             res.status(404).json({ success: false, error: "List not found" });
             return;
@@ -211,7 +214,7 @@ const archiveList = async (req, res) => {
         const userId = req.user.userId;
         const { id } = req.params;
         const { isArchived } = req.body;
-        const list = await List_1.default.findOne({ _id: id, userId });
+        const list = await List_1.default.findOne({ _id: id, userId }).populate("sharedWith.userId", "name email avatarUrl");
         if (!list) {
             res.status(404).json({ success: false, error: "List not found" });
             return;
@@ -280,7 +283,7 @@ const refreshListTaskCount = async (req, res) => {
     try {
         const userId = req.user.userId;
         const { id } = req.params;
-        const list = await List_1.default.findOne({ _id: id, userId });
+        const list = await List_1.default.findOne({ _id: id, userId }).populate("sharedWith.userId", "name email avatarUrl");
         if (!list) {
             res.status(404).json({ success: false, error: "List not found" });
             return;
@@ -309,7 +312,7 @@ const shareList = async (req, res) => {
         const userId = req.user.userId;
         const { id } = req.params;
         const { email, role = "viewer" } = req.body;
-        const list = await List_1.default.findOne({ _id: id, userId });
+        const list = await List_1.default.findOne({ _id: id, userId }).populate("sharedWith.userId", "name email avatarUrl");
         if (!list) {
             res.status(404).json({ success: false, error: "List not found" });
             return;
@@ -357,7 +360,7 @@ const removeCollaborator = async (req, res) => {
     try {
         const userId = req.user.userId;
         const { id, collaboratorId } = req.params;
-        const list = await List_1.default.findOne({ _id: id, userId });
+        const list = await List_1.default.findOne({ _id: id, userId }).populate("sharedWith.userId", "name email avatarUrl");
         if (!list) {
             res.status(404).json({ success: false, error: "List not found" });
             return;
@@ -394,7 +397,7 @@ const leaveSharedList = async (req, res) => {
         const list = await List_1.default.findOne({
             _id: id,
             "sharedWith.userId": userId,
-        });
+        }).populate("sharedWith.userId", "name email avatarUrl");
         if (!list) {
             res.status(404).json({ success: false, error: "List not found" });
             return;

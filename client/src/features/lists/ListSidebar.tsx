@@ -291,7 +291,7 @@ export const ListSidebar = () => {
                           Shared by {getOwnerName(list)}
                         </div>
                       )}
-                    </button>
+                    </div>
                   </div>
                 </li>
               );
@@ -319,3 +319,17 @@ export const ListSidebar = () => {
     </aside>
 
       <ShareListModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        list={selectedList}
+      />
+      
+      <CollaboratorModal
+        isOpen={collaboratorModalOpen}
+        onClose={() => setCollaboratorModalOpen(false)}
+        list={selectedList}
+        onRemove={handleRemoveCollaborator}
+      />
+    </>
+  );
+};

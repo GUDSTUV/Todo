@@ -25,10 +25,7 @@ const initNotificationScheduler = () => {
     // Every minute - process due reminders
     node_cron_1.default.schedule("* * * * *", async () => {
         try {
-            const res = await (0, notificationService_1.processDueReminders)();
-            if (res.processed > 0) {
-                console.log(`[Scheduler] Reminders processed=${res.processed}, errors=${res.errors}`);
-            }
+            await (0, notificationService_1.processDueReminders)();
         }
         catch (err) {
             console.error("[Scheduler] Error running processDueReminders:", err);
@@ -37,10 +34,7 @@ const initNotificationScheduler = () => {
     // Daily at 08:00 - process tasks due today
     node_cron_1.default.schedule("0 8 * * *", async () => {
         try {
-            const res = await (0, notificationService_1.processTasksDueToday)();
-            if (res.processed > 0) {
-                console.log(`[Scheduler] Tasks due today processed=${res.processed}, errors=${res.errors}`);
-            }
+            await (0, notificationService_1.processTasksDueToday)();
         }
         catch (err) {
             console.error("[Scheduler] Error running processTasksDueToday:", err);
@@ -49,10 +43,7 @@ const initNotificationScheduler = () => {
     // Every 6 hours on the hour - process overdue tasks
     node_cron_1.default.schedule("0 */6 * * *", async () => {
         try {
-            const res = await (0, notificationService_1.processOverdueTasks)();
-            if (res.processed > 0) {
-                console.log(`[Scheduler] Overdue tasks processed=${res.processed}, errors=${res.errors}`);
-            }
+            await (0, notificationService_1.processOverdueTasks)();
         }
         catch (err) {
             console.error("[Scheduler] Error running processOverdueTasks:", err);

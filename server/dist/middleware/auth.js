@@ -14,12 +14,7 @@ const protect = async (req, res, next) => {
             req.headers.authorization.startsWith("Bearer")) {
             token = req.headers.authorization.split(" ")[1];
         }
-        console.log("[auth middleware] Token present:", !!token);
-        if (token) {
-            console.log("[auth middleware] Token preview:", token.substring(0, 20) + "...");
-        }
         if (!token) {
-            console.log("[auth middleware] No token provided");
             res.status(401).json({
                 success: false,
                 error: "Not authorized to access this route",
@@ -28,9 +23,7 @@ const protect = async (req, res, next) => {
         }
         try {
             // Verify token
-            console.log("[auth middleware] Verifying token with JWT_SECRET...");
             const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
-            console.log("[auth middleware] Token verified successfully. Decoded:", decoded);
             // Attach user info to request
             req.user = decoded;
             next();

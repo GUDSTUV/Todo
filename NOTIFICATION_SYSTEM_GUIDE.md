@@ -6,7 +6,8 @@ The Todu notification system automatically sends in-app notifications and emails
 
 ## 🔔 Notification Types
 
-### 1. **Task Reminders** 
+### 1. **Task Reminders**
+
 - **Type**: `reminder`
 - **Schedule**: Checked every minute
 - **Trigger**: When a task's `reminderDate` is reached
@@ -14,6 +15,7 @@ The Todu notification system automatically sends in-app notifications and emails
 - **Email**: Yes (includes task details, priority, and due date)
 
 ### 2. **Tasks Due Today**
+
 - **Type**: `task_due`
 - **Schedule**: Daily at 8:00 AM
 - **Trigger**: Tasks with `dueDate` = today (not completed)
@@ -22,6 +24,7 @@ The Todu notification system automatically sends in-app notifications and emails
 - **Note**: Only sends one notification per task per day (prevents duplicates)
 
 ### 3. **Overdue Tasks**
+
 - **Type**: `task_overdue`
 - **Schedule**: Every 6 hours (00:00, 06:00, 12:00, 18:00)
 - **Trigger**: Tasks with `dueDate` < now (not completed)
@@ -31,15 +34,16 @@ The Todu notification system automatically sends in-app notifications and emails
 
 ## 📅 Cron Schedules
 
-| Processor | Cron Pattern | Description | Frequency |
-|-----------|--------------|-------------|-----------|
-| Due Reminders | `* * * * *` | Every minute | 1440 times/day |
-| Tasks Due Today | `0 8 * * *` | Daily at 8:00 AM | Once per day |
-| Overdue Tasks | `0 */6 * * *` | Every 6 hours at :00 | 4 times per day |
+| Processor       | Cron Pattern  | Description          | Frequency       |
+| --------------- | ------------- | -------------------- | --------------- |
+| Due Reminders   | `* * * * *`   | Every minute         | 1440 times/day  |
+| Tasks Due Today | `0 8 * * *`   | Daily at 8:00 AM     | Once per day    |
+| Overdue Tasks   | `0 */6 * * *` | Every 6 hours at :00 | 4 times per day |
 
 ## 🚀 How It Works
 
 ### Initialization
+
 The scheduler is automatically initialized when the server starts:
 
 ```typescript
@@ -50,6 +54,7 @@ initNotificationScheduler();
 ### Processors
 
 #### 1. processDueReminders()
+
 ```typescript
 // Finds tasks with reminderDate within the next minute
 // Creates in-app notification + sends email
@@ -57,6 +62,7 @@ initNotificationScheduler();
 ```
 
 #### 2. processTasksDueToday()
+
 ```typescript
 // Finds tasks due today (00:00 - 23:59)
 // Checks for existing notification today (prevents duplicates)
@@ -64,6 +70,7 @@ initNotificationScheduler();
 ```
 
 #### 3. processOverdueTasks()
+
 ```typescript
 // Finds tasks past their due date
 // Checks for notification in last 24 hours (prevents spam)
@@ -75,11 +82,13 @@ initNotificationScheduler();
 ### Method 1: Use the Test Endpoint (Development Only)
 
 **Trigger all processors:**
+
 ```bash
 POST http://localhost:5000/api/notifications/process
 ```
 
 **Trigger specific processor:**
+
 ```bash
 POST http://localhost:5000/api/notifications/process
 Content-Type: application/json
@@ -90,6 +99,7 @@ Content-Type: application/json
 ```
 
 **Example with curl:**
+
 ```bash
 # Get your auth token first
 TOKEN="your-jwt-token-here"
@@ -114,6 +124,7 @@ npx ts-node src/test-notifications.ts
 ```
 
 This will:
+
 - Connect to your MongoDB database
 - Show how many tasks have reminders, are due today, and are overdue
 - Run all three processors
@@ -122,18 +133,21 @@ This will:
 ### Method 3: Create Test Tasks
 
 #### Test Reminder Notification:
+
 1. Create a task
 2. Set `reminderDate` to 1-2 minutes from now
 3. Wait for the reminder
 4. Check notifications (should receive in-app + email)
 
 #### Test Due Today Notification:
+
 1. Create a task
 2. Set `dueDate` to today
 3. Manually trigger: `POST /api/notifications/process` with `{"kind":"due-today"}`
 4. Check notifications (should receive in-app notification)
 
 #### Test Overdue Notification:
+
 1. Create a task
 2. Set `dueDate` to yesterday or earlier
 3. Manually trigger: `POST /api/notifications/process` with `{"kind":"overdue"}`
@@ -142,6 +156,7 @@ This will:
 ## 📊 Monitoring
 
 ### Server Logs
+
 The scheduler logs important events:
 
 ```
@@ -153,6 +168,7 @@ The scheduler logs important events:
 ```
 
 ### Check Current Status
+
 ```bash
 # In the server, you'll see:
 [Scheduler] Notification cron jobs initialized
@@ -166,11 +182,13 @@ The scheduler logs important events:
 ### Environment Variables
 
 **Disable the scheduler** (useful for testing):
+
 ```env
 NOTIFICATIONS_SCHEDULER_ENABLED=false
 ```
 
 **Email settings** (required for reminder emails):
+
 ```env
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
@@ -183,12 +201,14 @@ CLIENT_URL=http://localhost:5173
 ## 📧 Email Notifications
 
 Currently, only **reminder notifications** send emails. The email includes:
+
 - Task title and description
 - Priority level
 - Due date (if set)
 - Link to view the task
 
 ### Email Requirements
+
 1. Configure email settings in `.env`
 2. For Gmail:
    - Enable 2FA
@@ -213,6 +233,7 @@ Currently, only **reminder notifications** send emails. The email includes:
    - Overdue: Only one notification per 24 hours
 
 4. **Manually trigger:**
+
    ```bash
    POST /api/notifications/process
    ```
@@ -220,8 +241,8 @@ Currently, only **reminder notifications** send emails. The email includes:
 5. **Check database:**
    ```javascript
    // In MongoDB
-   db.notifications.find({ userId: ObjectId("your-user-id") })
-   db.tasks.find({ userId: ObjectId("your-user-id") })
+   db.notifications.find({ userId: ObjectId("your-user-id") });
+   db.tasks.find({ userId: ObjectId("your-user-id") });
    ```
 
 ### Email not received?
@@ -257,6 +278,7 @@ Currently, only **reminder notifications** send emails. The email includes:
 ## 📝 Future Enhancements
 
 Potential improvements:
+
 - Email notifications for due today and overdue tasks
 - Customizable notification times (per user)
 - Notification preferences (enable/disable by type)

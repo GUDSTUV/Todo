@@ -23,14 +23,10 @@ router.put("/reset-password/:resetToken", authController_1.resetPassword);
 router.get("/google", passport_1.default.authenticate("google", { scope: ["profile", "email"] }));
 router.get("/google/callback", passport_1.default.authenticate("google", { failureRedirect: "/" }), (req, res) => {
     const user = req.user;
-    console.log("[OAuth callback] Creating JWT for user:", user.email);
-    console.log("[OAuth callback] Using JWT_SECRET:", jwt_1.JWT_SECRET.substring(0, 10) + "...");
     const token = jsonwebtoken_1.default.sign({ userId: user._id, email: user.email }, jwt_1.JWT_SECRET, {
         expiresIn: "7d",
     });
-    console.log("[OAuth callback] Token created, preview:", token.substring(0, 30) + "...");
     const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-    console.log("[OAuth callback] Redirecting to:", `${clientUrl}/dashboard?token=...`);
     res.redirect(`${clientUrl}/dashboard?token=${token}`);
 });
 // Google Identity Services (One Tap) endpoint
